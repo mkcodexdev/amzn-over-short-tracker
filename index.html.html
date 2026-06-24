@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" style="background:#080d1a;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Over &amp; Short Tracker — CAI6</title>
+<meta name="description" content="Track discrepancies, manage overages & shortages, and export reports — all in your browser. Amazon CAI6 Operations tool.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: rgba(100,116,139,.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,.5); }
+
+:root {
+  --bg: #080d1a;
+  --s1: #0e1628;
+  --s2: #162035;
+  --brd: #1e2d4a;
+  --pri: #3b7eff;
+  --priG: rgba(59,126,255,.15);
+  --acc: #7c3aed;
+  --txt: #e2e8f0;
+  --mut: #64748b;
+  --ok: #10b981;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --cyan: #06b6d4;
+  --r: 10px;
+}
+
+[data-theme="light"] {
+  --bg: #f0f4f8;
+  --s1: #ffffff;
+  --s2: #e8edf5;
+  --brd: #d0d9e8;
+  --pri: #2563eb;
+  --priG: rgba(37,99,235,.1);
+  --acc: #6d28d9;
+  --txt: #0f172a;
+  --mut: #64748b;
+  --ok: #059669;
+  --warn: #d97706;
+  --err: #dc2626;
+  --cyan: #0891b2;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background: var(--bg); color: var(--txt); min-height: 111vh; transition: background .25s, color .25s; zoom: 90%; }
+html { background: var(--bg); }
+
+/* ── THEME TOGGLE ── */
+.theme-toggle { display: flex; align-items: center; gap: .5rem; background: var(--s2); border: 1px solid var(--brd); color: var(--mut); padding: .45rem .85rem; border-radius: 8px; font-size: .8rem; cursor: pointer; transition: all .2s; user-select: none; }
+.theme-toggle:hover { border-color: var(--pri); color: var(--pri); }
+.theme-toggle .material-icons-round { font-size: 1rem; }
+.toggle-track { width: 32px; height: 18px; background: var(--brd); border-radius: 20px; position: relative; transition: background .25s; flex-shrink: 0; }
+[data-theme="light"] .toggle-track { background: var(--pri); }
+.toggle-thumb { width: 12px; height: 12px; background: #fff; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: transform .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+[data-theme="light"] .toggle-thumb { transform: translateX(14px); }
+
+[data-theme="light"] thead th { background: #f8fafc; }
+[data-theme="light"] tbody tr:hover { background: rgba(37,99,235,.04); }
+[data-theme="light"] .kpi.c-blue:hover { box-shadow: 0 12px 36px rgba(59,126,255,.15), 0 0 0 1px rgba(59,126,255,.25); }
+[data-theme="light"] .kpi.c-red:hover { box-shadow: 0 12px 36px rgba(220,38,38,.15), 0 0 0 1px rgba(220,38,38,.25); }
+[data-theme="light"] .kpi.c-green:hover { box-shadow: 0 12px 36px rgba(5,150,105,.15), 0 0 0 1px rgba(5,150,105,.25); }
+[data-theme="light"] .kpi.c-orange:hover { box-shadow: 0 12px 36px rgba(217,119,6,.15), 0 0 0 1px rgba(217,119,6,.25); }
+[data-theme="light"] .t-card { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+[data-theme="light"] .kpi { box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+[data-theme="light"] .topbar { box-shadow: 0 1px 8px rgba(0,0,0,.07); }
+[data-theme="light"] #uploadScreen { background: radial-gradient(ellipse at 50% 0%, rgba(37,99,235,.07) 0%, transparent 70%); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--brd); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--mut); }
+
+/* ── UPLOAD SCREEN ── */
+#uploadScreen {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 111vh; padding: 2rem; position: relative; overflow: hidden;
+  background: var(--bg);
+}
+
+.glow-orb { display: none; }
+.bg-shape { display: none; }
+
+[data-theme="light"] #uploadScreen { background: var(--bg); }
+
+.ul-theme-btn { display: none; }
+
+/* ── UPLOAD HEADER ── */
+.ul-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 1rem 1.75rem;
+  background: rgba(14,22,40,0.75);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  box-shadow: 0 2px 16px rgba(0,0,0,.25);
+}
+[data-theme="light"] .ul-header {
+  background: rgba(255,255,255,0.88);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.ul-header-left { display: flex; align-items: center; gap: .6rem; }
+.ul-header-logo {
+  width: 32px; height: 32px;
+  background: var(--pri);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ul-header-logo .material-icons-round { font-size: 1.05rem; color: #fff; }
+.ul-header-title {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  color: var(--txt);
+  line-height: 1;
+}
+.ul-header-title em {
+  font-style: normal;
+  color: var(--pri);
+}
+.ul-header-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.08); margin: 0 2px; }
+[data-theme="light"] .ul-header-divider { background: rgba(0,0,0,0.1); }
+.ul-header-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: rgba(59,126,255,.1); border: 1px solid rgba(59,126,255,.2);
+  border-radius: 20px; padding: .22rem .75rem;
+  font-size: .68rem; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--pri);
+}
+.ul-header-badge .material-icons-round { font-size: .7rem; }
+
+.upload-card { width: 100%; max-width: 820px; position: relative; z-index: 1; }
+.upload-card-inner {
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--s1);
+  border: 1px solid var(--brd);
+  border-radius: 20px; overflow: hidden;
+}
+
+.upload-left {
+  padding: 2.5rem 2.25rem;
+  border-right: 1px solid var(--brd);
+  display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem;
+}
+
+.upload-brand-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--pri); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; }
+.upload-brand-icon .material-icons-round { font-size: 1.4rem; color: #fff; }
+.upload-left h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  line-height: 1.15;
+  margin-bottom: .5rem;
+  color: var(--txt);
+}
+.upload-left h1 em {
+  font-style: normal;
+  color: var(--pri);
+}
+
+.upload-features-list { display: flex; flex-direction: column; gap: .55rem; margin-top: .25rem; }
+.upload-feat-item { display: flex; align-items: center; gap: .6rem; font-size: .78rem; color: var(--mut); }
+.upload-feat-item .material-icons-round { font-size: .9rem; color: var(--pri); opacity: .8; }
+
+.upload-left-bottom { margin-top: auto; }
+.ul-badge { display: inline-flex; align-items: center; gap: .4rem; background: rgba(59,126,255,.1); border: 1px solid rgba(59,126,255,.2); border-radius: 30px; padding: .3rem .9rem; font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--pri); }
+
+.upload-right { padding: 2.5rem 2rem; display: flex; flex-direction: column; gap: 1rem; justify-content: center; }
+
+.drop-zone { cursor: pointer; width: 100%; border: 1.5px dashed var(--brd); border-radius: 14px; padding: 2rem 1.5rem; transition: all .2s; background: transparent; text-align: center; }
+.drop-zone:hover { border-color: var(--pri); background: rgba(59,126,255,.04); }
+.drop-zone.over { border-color: var(--pri); background: rgba(59,126,255,.07); }
+
+.dz-icon-wrap { width: 52px; height: 52px; margin: 0 auto 1rem; background: var(--s2); border: 1px solid var(--brd); border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.drop-zone:hover .dz-icon-wrap { border-color: rgba(59,126,255,.4); background: rgba(59,126,255,.08); }
+.dz-icon { font-size: 1.6rem; color: var(--mut); background: none; -webkit-text-fill-color: unset; }
+.drop-zone:hover .dz-icon { color: var(--pri); }
+
+.drop-zone h2 { font-size: .95rem; font-weight: 600; margin-bottom: .3rem; color: var(--txt); }
+.drop-zone p { color: var(--mut); font-size: .76rem; margin-bottom: 1rem; line-height: 1.5; }
+
+.fmt-pills { display: flex; justify-content: center; gap: .3rem; }
+.fmt-pill { background: var(--s2); border: 1px solid var(--brd); color: var(--mut); border-radius: 6px; padding: .15rem .5rem; font-size: .63rem; font-weight: 700; letter-spacing: .06em; }
+.fmt-pill.green { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.2); color: var(--ok); }
+
+.fmt-pills { margin-bottom: 1.25rem; }
+.ul-btn { display: inline-flex; align-items: center; gap: .45rem; background: var(--pri); color: #fff; border: none; padding: .7rem 1.5rem; border-radius: 10px; font-size: .84rem; font-weight: 600; cursor: pointer; transition: all .2s; width: 100%; justify-content: center; margin-bottom: 1.25rem; }
+.ul-btn:hover { background: #2a6fef; transform: translateY(-1px); }
+.ul-btn:active { transform: translateY(0); }
+.ul-btn .material-icons-round { font-size: .95rem; }
+
+.ul-divider { display: flex; align-items: center; gap: .5rem; color: var(--mut); font-size: .7rem; width: 100%; }
+.ul-divider::before, .ul-divider::after { content: ''; flex: 1; height: 1px; background: var(--brd); }
+
+.drag-hint { font-size: .72rem; color: var(--mut); display: flex; align-items: center; justify-content: center; gap: .3rem; opacity: .7; }
+.drag-hint .material-icons-round { font-size: .88rem; }
+
+#fileInput { display: none; }
+
+/* ── LOADER ── */
+#loader { display: none; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 1rem; }
+.spinner { width: 44px; height: 44px; border: 3px solid var(--brd); border-top-color: var(--pri); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── DASHBOARD ── */
+#dashboard { display: none; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: rgba(14,22,40,0.85);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: .7rem 1.75rem;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 4px 24px rgba(0,0,0,.35);
+  isolation: isolate;
+}
+[data-theme="light"] .topbar {
+  background: rgba(255,255,255,0.88);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  box-shadow: 0 2px 16px rgba(0,0,0,.07);
+}
+.tb-left { display: flex; align-items: center; gap: .65rem; }
+.tb-logo {
+  width: 34px; height: 34px;
+  background: var(--pri);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.tb-logo .material-icons-round { font-size: 1.15rem; color: #fff; }
+.tb-title {
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  color: var(--txt);
+  line-height: 1;
+}
+.tb-title em {
+  font-style: normal;
+  color: var(--pri);
+}
+.tb-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.08); margin: 0 2px; }
+[data-theme="light"] .tb-divider { background: rgba(0,0,0,0.1); }
+.tb-right { display: flex; align-items: center; gap: .45rem; }
+
+/* File pill */
+.meta-pill {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px; padding: .28rem .85rem;
+  font-size: .75rem; color: var(--mut);
+  display: flex; align-items: center; gap: .35rem;
+  transition: all .2s;
+}
+[data-theme="light"] .meta-pill { background: var(--s2); border-color: var(--brd); }
+.meta-pill strong { color: var(--txt); font-weight: 600; }
+
+/* Icon-only button */
+.icon-btn {
+  display: flex; align-items: center; justify-content: center; gap: .35rem;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--mut); padding: .42rem .75rem;
+  border-radius: 8px; font-size: .78rem; font-weight: 500;
+  cursor: pointer; transition: all .18s; white-space: nowrap;
+}
+[data-theme="light"] .icon-btn { background: var(--s2); border-color: var(--brd); }
+.icon-btn:hover { background: rgba(59,126,255,0.1); border-color: rgba(59,126,255,0.4); color: var(--pri); transform: translateY(-1px); }
+.icon-btn:active { transform: translateY(0); }
+.icon-btn .material-icons-round { font-size: .92rem; }
+
+/* Icon-ONLY square button (undo/redo, theme) */
+.icon-btn-sq {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--mut); border-radius: 8px;
+  cursor: pointer; transition: all .18s; flex-shrink: 0;
+  opacity: 1;
+}
+[data-theme="light"] .icon-btn-sq { background: var(--s2); border-color: var(--brd); }
+.icon-btn-sq:hover { background: rgba(59,126,255,0.12); border-color: rgba(59,126,255,0.4); color: var(--pri); transform: translateY(-1px); }
+.icon-btn-sq:active { transform: translateY(0); }
+.icon-btn-sq .material-icons-round { font-size: .95rem; }
+.icon-btn-sq.active {
+  opacity: 1;
+  color: var(--pri);
+  border-color: rgba(59,126,255,.35);
+  background: rgba(59,126,255,.1);
+}
+.icon-btn-sq.active:hover {
+  background: rgba(59,126,255,.2);
+  border-color: var(--pri);
+  transform: translateY(-1px);
+}
+
+/* Primary export button */
+.btn-export {
+  background: #10b981;
+  color: #fff; border: 1px solid #059669;
+  font-weight: 600;
+}
+.btn-export:hover { background: #059669; color: #fff; border-color: #047857; }
+
+/* Append button */
+.btn-append {
+  background: rgba(245,158,11,.08);
+  color: var(--warn); border: 1px solid rgba(245,158,11,.35);
+  font-weight: 600;
+}
+[data-theme="light"] .btn-append { color: var(--warn); border-color: rgba(217,119,6,.4); background: rgba(217,119,6,.08); }
+.btn-append:hover { background: rgba(245,158,11,.15); border-color: var(--warn); color: var(--warn); }
+
+/* Reset button */
+.btn-reset {
+  color: var(--err); border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08);
+}
+[data-theme="light"] .btn-reset { color: var(--err); border-color: rgba(220,38,38,.4); background: rgba(220,38,38,.1); }
+.btn-reset:hover { background: rgba(239,68,68,.15) !important; border-color: var(--err) !important; color: var(--err) !important; }
+
+/* Theme toggle compact */
+.theme-toggle {
+  display: flex; align-items: center; gap: .4rem;
+  background: transparent; border: 1px solid rgba(255,255,255,0.1);
+  color: var(--mut); padding: .28rem .65rem;
+  border-radius: 20px; font-size: .78rem;
+  cursor: pointer; transition: all .2s; user-select: none;
+}
+[data-theme="light"] .theme-toggle { background: var(--s2); border-color: var(--brd); color: var(--mut); }
+.theme-toggle:hover { border-color: var(--pri); color: var(--pri); }
+.theme-toggle .material-icons-round { font-size: .95rem; }
+.toggle-track { width: 28px; height: 16px; background: var(--brd); border-radius: 20px; position: relative; transition: background .25s; flex-shrink: 0; }
+[data-theme="light"] .toggle-track { background: var(--pri); }
+.toggle-thumb { width: 10px; height: 10px; background: #fff; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: transform .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+[data-theme="light"] .toggle-thumb { transform: translateX(12px); }
+
+/* Light mode topbar fixes */
+[data-theme="light"] .icon-btn {
+  background: var(--s2); border-color: var(--brd); color: var(--mut);
+}
+[data-theme="light"] .icon-btn:hover {
+  background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.35); color: var(--pri);
+}
+[data-theme="light"] .meta-pill {
+  background: var(--s2); border-color: var(--brd); color: var(--mut);
+}
+[data-theme="light"] .tb-divider { background: var(--brd); }
+
+.tb-center {
+  display: flex; align-items: center; gap: .75rem;
+  position: absolute; left: 50%; transform: translateX(-50%);
+  pointer-events: none;
+}
+.tb-progress-label {
+  font-size: .68rem; font-weight: 600; color: var(--mut);
+  letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+}
+.tb-progress-wrap {
+  width: 220px; height: 7px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 99px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+[data-theme="light"] .tb-progress-wrap { background: rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.06); }
+.tb-progress-bar {
+  height: 100%; width: 0%;
+  background: #10b981;
+  border-radius: 99px;
+  transition: width .8s cubic-bezier(.4,0,.2,1);
+}
+.tb-progress-pct {
+  font-size: .75rem; font-weight: 700;
+  color: #10b981; min-width: 36px; text-align: right;
+  font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+}
+
+/* Clock on left */
+.tb-clock-wrap {
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: .3rem .7rem;
+}
+[data-theme="light"] .tb-clock-wrap { background: var(--s2); border-color: var(--brd); }
+.tb-clock-icon { font-size: .85rem; color: var(--mut); opacity: .6; }
+.tb-clock-texts { display: flex; flex-direction: column; line-height: 1.25; }
+.tb-clock {
+  font-size: .82rem; font-weight: 700; letter-spacing: .04em;
+  color: var(--txt); font-variant-numeric: tabular-nums;
+}
+.tb-date {
+  font-size: .62rem; font-weight: 500;
+  color: var(--mut); letter-spacing: .01em;
+}
+[data-theme="light"] .tb-clock { color: var(--txt); }
+[data-theme="light"] .tb-date { color: var(--mut); }
+
+/* KPI ROW */
+.kpi-row { padding: .85rem 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .55rem; }
+.kpi { background: var(--s1); border-radius: 8px; padding: .75rem 1rem; position: relative; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; display: flex; flex-direction: row; align-items: center; gap: .7rem; }
+.kpi.c-blue { border: 1px solid rgba(59,126,255,.35); }
+.kpi.c-red { border: 1px solid rgba(239,68,68,.35); }
+.kpi.c-green { border: 1px solid rgba(16,185,129,.35); }
+.kpi.c-orange { border: 1px solid rgba(245,158,11,.35); }
+.kpi::before { content: ''; position: absolute; inset: 0; opacity: .04; pointer-events: none; }
+.kpi.c-blue::before { background: linear-gradient(120deg, rgba(59,126,255,1) 0%, transparent 60%); }
+.kpi.c-red::before { background: linear-gradient(120deg, rgba(239,68,68,1) 0%, transparent 60%); }
+.kpi.c-green::before { background: linear-gradient(120deg, rgba(16,185,129,1) 0%, transparent 60%); }
+.kpi.c-orange::before { background: linear-gradient(120deg, rgba(245,158,11,1) 0%, transparent 60%); }
+.kpi:hover { transform: translateY(-2px); }
+.kpi.c-blue:hover { box-shadow: 0 6px 18px rgba(59,126,255,.18); border-color: rgba(59,126,255,.6); }
+.kpi.c-red:hover { box-shadow: 0 6px 18px rgba(239,68,68,.18); border-color: rgba(239,68,68,.6); }
+.kpi.c-green:hover { box-shadow: 0 6px 18px rgba(16,185,129,.18); border-color: rgba(16,185,129,.6); }
+.kpi.c-orange:hover { box-shadow: 0 6px 18px rgba(245,158,11,.18); border-color: rgba(245,158,11,.6); }
+.kpi-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kpi-icon .material-icons-round { font-size: 1rem; }
+.c-blue .kpi-icon { background: rgba(59,126,255,.15); color: var(--pri); }
+.c-red .kpi-icon { background: rgba(239,68,68,.15); color: var(--err); }
+.c-green .kpi-icon { background: rgba(16,185,129,.15); color: var(--ok); }
+.c-orange .kpi-icon { background: rgba(245,158,11,.15); color: var(--warn); }
+.kpi-text { display: flex; flex-direction: column; gap: .05rem; min-width: 0; }
+.kpi-label { font-size: .58rem; text-transform: uppercase; letter-spacing: .1em; color: var(--mut); font-weight: 700; }
+.kpi-val { font-size: 1.45rem; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+.c-blue .kpi-val { color: var(--pri); }
+.c-green .kpi-val { color: var(--ok); }
+.c-red .kpi-val { color: var(--err); }
+.c-orange .kpi-val { color: var(--warn); }
+.kpi-sub { font-size: .63rem; color: var(--mut); }
+
+/* CONTROLS */
+.ctrls { padding: 0 2rem 1rem; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.search-box { position: relative; min-width: 220px; max-width: 360px; flex: 1; }
+.search-box .material-icons-round { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--mut); font-size: 1rem; pointer-events: none; }
+.s-input { width: 100%; background: var(--s1); border: 1px solid var(--brd); color: var(--txt); padding: .6rem 1rem .6rem 2.5rem; border-radius: 8px; font-size: .85rem; outline: none; transition: border-color .2s; }
+.s-input:focus { border-color: var(--pri); }
+.chip-bar { display: flex; gap: .4rem; flex-wrap: wrap; }
+.chip { background: var(--s2); border: 1px solid var(--brd); border-radius: 6px; padding: .35rem .8rem; font-size: .75rem; cursor: pointer; transition: all .15s; color: var(--mut); white-space: nowrap; }
+.chip:hover { border-color: var(--mut); }
+.chip.on { background: var(--priG); border-color: var(--pri); color: var(--pri); }
+.rec-count { margin-left: auto; font-size: .78rem; color: var(--mut); }
+
+/* TABLE */
+.t-wrap { padding: 0 2rem 2rem; }
+.t-card { background: var(--s1); border: 1px solid var(--brd); border-radius: var(--r); overflow: auto; max-height: calc(111vh - 240px); min-height: 200px; }
+table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+thead th { background: var(--s1); position: sticky; top: 0; z-index: 20; padding: .8rem 1rem; text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--mut); font-weight: 600; white-space: nowrap; border-bottom: 1px solid var(--brd); }
+.sortable { cursor: pointer; user-select: none; transition: color .2s; }
+.sortable:hover { color: var(--txt); }
+.si { font-size: 14px; vertical-align: middle; margin-left: 4px; opacity: 0.5; }
+tbody tr { border-bottom: 1px solid rgba(30,45,74,.4); transition: background .12s; position: relative; }
+tbody tr:hover { background: rgba(59,126,255,.04); }
+tbody tr:focus-within { z-index: 9999; }
+tbody td { padding: .75rem 1rem; vertical-align: middle; white-space: nowrap; }
+
+.cell-flex { display: flex; align-items: center; gap: 6px; }
+.copy-btn { font-size: 14px; color: var(--mut); cursor: pointer; transition: color .2s; display: inline-flex; }
+.copy-btn:hover { color: var(--pri); }
+
+.badge { display: inline-flex; align-items: center; padding: .18rem .65rem; border-radius: 20px; font-size: .7rem; font-weight: 600; gap: 4px; }
+.badge-shortage { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.35); }
+.badge-overage { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
+[data-theme="light"] .badge-shortage { color: #2563eb; }
+[data-theme="light"] .badge-overage { color: #dc2626; }
+
+/* EDITABLE FIELDS */
+.td-edit { min-width: 200px; }
+.edit-wrap { position: relative; }
+.edit-wrap:focus-within { z-index: 9999; }
+.edit-input { width: 100%; background: var(--s2); border: 1px solid var(--brd); border-radius: 6px; color: var(--txt); font-family: 'Inter', sans-serif; font-size: .8rem; padding: 6px 10px; outline: none; transition: all .2s; }
+.edit-input:focus { border-color: var(--pri); background: var(--bg); box-shadow: 0 0 0 2px var(--priG); }
+.edit-input.has-value { border-color: var(--ok); }
+.edit-input::placeholder { color: var(--mut); }
+.no-select { user-select: none; -webkit-user-select: none; }
+
+/* ══════════════════════════════════════════
+   AUTOCOMPLETE — GRID TABLE STYLE
+══════════════════════════════════════════ */
+.autocomplete {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 99999;
+  width: 340px;
+  background: var(--s1);
+  border: 1px solid var(--brd);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  padding: 6px;
+  display: none;
+  animation: acFadeIn .12s ease;
+}
+.autocomplete.open { display: block; }
+
+@keyframes acFadeIn {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ac-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.fcr-link { color: var(--txt); text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+.fcr-link:hover { text-decoration: underline; color: var(--pri); }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--s1); border: 1px solid var(--brd); border-radius: 8px; padding: 11px 20px; color: var(--txt); font-size: .82rem; font-weight: 600; box-shadow: 0 12px 36px rgba(0,0,0,.4); z-index: 2000; transition: all .25s ease; opacity: 0; pointer-events: none; }
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.toast.success { border-color: var(--ok); }
+.toast.error { border-color: var(--err); }
+
+/* BULK EDIT BAR */
+input[type="checkbox"] { appearance: none; background-color: var(--s2); margin: 0; font: inherit; color: var(--pri); width: 16px; height: 16px; border: 1px solid var(--brd); border-radius: 4px; display: grid; place-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+input[type="checkbox"]::before { content: ""; width: 10px; height: 10px; transform: scale(0); transition: 0.2s transform cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: inset 1em 1em white; transform-origin: center; clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); }
+input[type="checkbox"]:checked { background-color: var(--pri); border-color: var(--pri); }
+input[type="checkbox"]:checked::before { transform: scale(1); }
+[data-theme="light"] input[type="checkbox"] { background-color: var(--s1); }
+[data-theme="light"] input[type="checkbox"]:checked { background-color: var(--pri); }
+
+.bulk-bar { display: none; align-items: center; gap: .5rem; margin-left: auto; background: var(--priG); padding: .35rem .6rem .35rem .8rem; border-radius: 8px; border: 1px solid var(--pri); }
+.bulk-bar.show { display: flex; }
+.bulk-input { background: var(--s1); border: 1px solid var(--brd); color: var(--txt); border-radius: 6px; padding: .35rem .6rem; font-size: .78rem; width: 130px; outline: none; font-family: 'Inter', sans-serif; transition: border-color .2s; }
+.bulk-input:focus { border-color: var(--pri); }
+.bulk .ac-item.act { background:var(--pri); color:#fff; }
+
+  /* SUMMARY REPORT */
+  .summary-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto; /* Push to right */
+  }
+  .summary-section {
+    background: var(--s1);
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    display: none;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--brd);
+  }
+  .summary-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--txt);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .summary-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .chart-widget {
+    background: var(--bg);
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .chart-widget--full {
+    grid-column: 1 / -1;
+  }
+  .chart-widget-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--mut);
+    margin-bottom: 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chart-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .chart-label {
+    width: 120px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--txt);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chart-bar-container {
+    flex: 1;
+    background: var(--s2);
+    border-radius: 6px;
+    height: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .chart-bar {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--pri), var(--cyan));
+    display: flex;
+    align-items: center;
+    padding-right: 6px;
+    justify-content: flex-end;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .chart-bar.short { background: linear-gradient(90deg, #ef4444, #f97316); }
+  .chart-bar.over { background: linear-gradient(90deg, #10b981, #06b6d4); }
+  .chart-value {
+    width: 80px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--txt);
+  }
+  .chart-breakdown {
+    display: flex;
+    gap: 8px;
+    width: 100px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .bd-badge {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .summary-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 0;
+  }
+  .summary-card {
+    background: var(--bg);
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  .sc-title {
+    font-size: 0.75rem;
+    color: var(--mut);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .sc-val {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .sc-pct {
+    font-size: 0.75rem;
+    color: var(--mut);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .dept-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px; }
+  .dept-card { background: var(--bg); border: 1px solid var(--brd); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .dept-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--brd); }
+  .dept-card-title { font-size: 0.8rem; font-weight: 700; color: var(--txt); text-transform: uppercase; }
+  .dept-card-total { font-size: 0.75rem; font-weight: 700; }
+  .user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .user-row:last-child { margin-bottom: 0; }
+  .user-name { width: 90px; font-size: 0.75rem; font-weight: 400; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  [data-theme="light"] .user-name { color: #334155; }
+  .user-bar-container { flex: 1; background: var(--s2); height: 6px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+  .user-bar { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); width: 0; }
+  .user-count { width: 30px; text-align: right; font-size: 0.75rem; font-weight: 700; color: var(--txt); }
+  .user-pct { width: 45px; text-align: right; font-size: 0.65rem; font-weight: 500; color: var(--pri); }
+
+.bulk-btn { background: var(--pri); color: #fff; border: none; border-radius: 6px; padding: .35rem .85rem; font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+.bulk-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<div id="uploadScreen">
+  <div class="ul-header">
+    <div class="ul-header-left">
+      <div class="ul-header-logo"><span class="material-icons-round">inventory_2</span></div>
+      <div class="ul-header-title">O&amp;S <em>Tracker</em></div>
+      <div class="ul-header-divider"></div>
+      <div class="ul-header-badge">
+        <span class="material-icons-round">location_on</span> CAI6 · Operations
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:.75rem;">
+      <!-- Date & Time -->
+      <div style="display:flex; align-items:center; gap:.4rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:.38rem .85rem;">
+        <span class="material-icons-round" style="font-size:.85rem; color:var(--mut);">calendar_today</span>
+        <span id="ulDateTime" style="font-size:.78rem; font-weight:600; color:var(--txt); letter-spacing:.02em;"></span>
+      </div>
+      <!-- Upload Button -->
+      <button onclick="document.getElementById('fileInput').click()" style="display:flex; align-items:center; gap:.45rem; background:var(--pri); color:#fff; border:none; border-radius:8px; padding:.42rem 1.1rem; font-size:.8rem; font-weight:700; cursor:pointer; transition:all .2s; letter-spacing:.02em;" onmouseover="this.style.background='#2a6fef'" onmouseout="this.style.background='var(--pri)'">
+        <span class="material-icons-round" style="font-size:.95rem;">upload_file</span> Upload File
+      </button>
+      <!-- Theme Toggle -->
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="border-color:rgba(255,255,255,0.1);">
+        <span class="material-icons-round" id="ulThemeIcon">light_mode</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </button>
+    </div>
+  </div>
+
+  <script>
+  function updateUlHeader() {
+    const now = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = days[now.getDay()];
+    const date = now.getDate();
+    const month = months[now.getMonth()];
+    const year = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('ulDateTime').textContent = `${day}, ${date} ${month} ${year} · ${hh}:${mm}`;
+
+
+  }
+  updateUlHeader();
+  setInterval(updateUlHeader, 60000);
+  </script>
+
+  <div class="upload-card">
+    <div class="upload-card-inner">
+      <div class="upload-left">
+        <div class="upload-left-top">
+          <div class="upload-brand-icon">
+            <span class="material-icons-round">inventory_2</span>
+          </div>
+          <h1>Over &amp; Short<br><em>Tracker</em></h1>
+          <div class="upload-features-list">
+            <div class="upload-feat-item"><span class="material-icons-round">bolt</span> Instant Processing</div>
+            <div class="upload-feat-item"><span class="material-icons-round">shield</span> Built for Speed</div>
+            <div class="upload-feat-item"><span class="material-icons-round">edit_note</span> Inline Editing &amp; Bulk Actions</div>
+            <div class="upload-feat-item"><span class="material-icons-round">download</span> Export to CSV</div>
+          </div>
+        </div>
+        <div class="upload-left-bottom">
+          <div class="ul-badge"><span class="material-icons-round" style="font-size:.75rem;">verified_user</span> Deep Dive Analytics</div>
+        </div>
+      </div>
+
+      <div class="upload-right">
+        <div class="drop-zone" id="dropZone" onclick="browseFile()">
+          <div class="dz-icon-wrap">
+            <span class="material-icons-round dz-icon">cloud_upload</span>
+          </div>
+          <h2>Drop your file here</h2>
+          <p>Drag and drop your report, or click to browse your files</p>
+          <div class="fmt-pills">
+            <span class="fmt-pill">CSV</span>
+            <span class="fmt-pill">XLSX</span>
+            <span class="fmt-pill green">XLS</span>
+          </div>
+          <button class="ul-btn" style="pointer-events:none;">
+            <span class="material-icons-round">folder_open</span>
+            Browse File
+          </button>
+          <div class="ul-divider">or drag &amp; drop</div>
+          <div class="drag-hint">
+            <span class="material-icons-round">drag_indicator</span>
+            Drag your file directly into this area
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept=".csv, .xlsx, .xls" multiple>
+</div>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p style="color:var(--mut);font-size:.88rem;margin-top:.5rem;">Processing data...</p>
+</div>
+
+<div id="dashboard">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo"><span class="material-icons-round">inventory_2</span></div>
+      <div class="tb-title">O&amp;S <em>Tracker</em></div>
+      <div class="tb-divider"></div>
+      <div class="meta-pill" style="flex-direction:column; align-items:flex-start; gap:2px; padding:0.4rem 0.85rem; border-radius:12px;">
+        <div style="display:flex; align-items:center; gap:0.35rem;">
+          <span class="material-icons-round" style="font-size:.85rem;opacity:.6;">description</span>
+          <strong id="fName" style="font-size:.8rem;">No file loaded</strong>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.35rem; color:var(--mut);">
+          <span class="material-icons-round" style="font-size:.75rem;opacity:.6;">schedule</span>
+          <span style="font-size:0.7rem; color:var(--mut); font-weight:600; letter-spacing:.04em;">Last Uploaded:</span>
+          <span id="tbUploadTime" style="font-size:0.7rem;">Upload time not available</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Progress -->
+    <div class="tb-center">
+      <div class="tb-progress-label">Progress</div>
+      <div class="tb-progress-wrap">
+        <div class="tb-progress-bar" id="tbProgressBar"></div>
+      </div>
+      <div class="tb-progress-pct" id="tbProgressPct">0%</div>
+    </div>
+
+    <div class="tb-right">
+      <!-- Theme -->
+      <button class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark mode" onclick="toggleTheme()">
+        <span class="material-icons-round" id="themeIcon">light_mode</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Undo / Redo -->
+      <button class="icon-btn-sq" id="btnUndo" onclick="undo()" title="Undo (Ctrl+Z)">
+        <span class="material-icons-round">undo</span>
+      </button>
+      <button class="icon-btn-sq" id="btnRedo" onclick="redo()" title="Redo (Ctrl+Y)">
+        <span class="material-icons-round">redo</span>
+      </button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Actions -->
+      <button class="icon-btn btn-export" onclick="saveToCSV()" title="Ctrl + S">
+        <span class="material-icons-round">save</span> Save
+      </button>
+      <button class="icon-btn btn-append" onclick="document.getElementById('fileInput').click()">
+        <span class="material-icons-round">post_add</span> Append
+      </button>
+      <button class="icon-btn btn-reset" onclick="resetAll()">
+        <span class="material-icons-round">delete_sweep</span> Reset
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi c-green">
+      <div class="kpi-icon"><span class="material-icons-round">list_alt</span></div>
+      <div class="kpi-text">
+        <div class="kpi-label">Total Rows</div>
+        <div class="kpi-val" id="kpiTotal">0</div>
+        <div class="kpi-sub">Total records</div>
+      </div>
+    </div>
+    <div class="kpi c-blue">
+      <div class="kpi-icon"><span class="material-icons-round">trending_down</span></div>
+      <div class="kpi-text">
+        <div class="kpi-label">Shortages</div>
+        <div class="kpi-val" id="kpiShortage">0</div>
+        <div class="kpi-sub">Missing items</div>
+      </div>
+    </div>
+    <div class="kpi c-red">
+      <div class="kpi-icon"><span class="material-icons-round">trending_up</span></div>
+      <div class="kpi-text">
+        <div class="kpi-label">Overages</div>
+        <div class="kpi-val" id="kpiOverage">0</div>
+        <div class="kpi-sub">Extra items</div>
+      </div>
+    </div>
+    <div class="kpi c-orange">
+      <div class="kpi-icon"><span class="material-icons-round">inventory</span></div>
+      <div class="kpi-text">
+        <div class="kpi-label">Total Discrepancy Qty</div>
+        <div class="kpi-val" id="kpiTotalQty">0</div>
+        <div class="kpi-sub">Sum of absolute qty</div>
+      </div>
+    </div>
+    <div class="kpi c-blue">
+      <div class="kpi-icon"><span class="material-icons-round">task_alt</span></div>
+      <div class="kpi-text">
+        <div class="kpi-label">Completion</div>
+        <div class="kpi-val" id="kpiFilled">0%</div>
+        <div class="kpi-sub">Fully processed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctrls">
+    <div class="search-box">
+      <span class="material-icons-round">search</span>
+      <input type="text" id="sInput" class="s-input" placeholder="Search user, container, or ASIN...">
+    </div>
+    <div class="chip-bar" id="chipBar">
+      <span class="chip on" id="chip-all" onclick="setFilter('all')">All Records</span>
+      <span class="chip" id="chip-shortage" onclick="setFilter('shortage')">Shortage</span>
+      <span class="chip" id="chip-overage" onclick="setFilter('overage')">Overage</span>
+      <span class="chip" id="chip-empty" onclick="setFilter('empty')">Incomplete</span>
+      <span class="chip summary-btn" id="chip-summary" onclick="setFilter('summary')" title="View Summary Report">
+        <span class="material-icons-round" style="font-size:16px;">insert_chart_outlined</span> Summary Report
+      </span>
+    </div>
+    <div class="bulk-bar" id="bulkBar">
+      <span id="selCount" style="font-size:.78rem; color:var(--pri); font-weight:700;">0 selected</span>
+      <div class="edit-wrap">
+        <input type="text" id="bulkCmt" class="bulk-input" placeholder="Bulk Comment..." autocomplete="off"
+          onfocus="openAC('bulk')" onblur="closeAC('bulk')">
+        <div class="autocomplete" id="ac_bulk"></div>
+      </div>
+      <input type="text" id="bulkUsr" class="bulk-input" placeholder="Bulk User...">
+      <button class="bulk-btn" onclick="applyBulk()">Apply</button>
+      <button class="bulk-btn" style="background:var(--err); color:#fff; border:none; margin-left:8px;" onclick="deleteBulk()">Delete</button>
+    </div>
+    <span class="rec-count" id="recCount">0 records</span>
+  </div>
+
+  <div class="summary-section" id="summarySection">
+    <div class="summary-header">
+      <h2><span class="material-icons-round" style="color:var(--pri);">analytics</span> Summary Report <span style="font-size:0.8rem; font-weight:400; color:var(--mut);"> (Impact by Root Cause)</span></h2>
+      <button class="icon-btn" onclick="setFilter('all')" title="Close"><span class="material-icons-round">close</span></button>
+    </div>
+    <div class="summary-body" id="summaryChartContainer">
+      <!-- chart bars will be injected here -->
+    </div>
+  </div>
+
+  <div class="t-wrap">
+    <div class="t-card">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center;"><input type="checkbox" id="cbAll" title="Select All Visible" onchange="toggleAll(this.checked)"></th>
+            <th style="width:50px;text-align:center;">#</th>
+            <th data-col="user_id" class="sortable">User ID <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="container" class="sortable">Container <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="asin" class="sortable">ASIN <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="symptoms" class="sortable">Symptoms <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="quantity" class="sortable" style="text-align:center;">Qty <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="timestamp" class="sortable">Timestamp <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="comment" class="sortable">Comment <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="user" class="sortable">User <span class="material-icons-round si">unfold_more</span></th>
+          </tr>
+        </thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div id="exportReminder" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000; justify-content:center; align-items:center;">
+  <div style="background:var(--s1); padding:2rem 2rem 1.5rem 2rem; border-radius:8px; border:1px solid var(--brd); text-align:center; max-width:320px; position:relative;">
+    <span class="material-icons-round" style="position:absolute; top:12px; right:12px; cursor:pointer; color:var(--mut); font-size:1.2rem; transition:0.2s;" onclick="document.getElementById('exportReminder').style.display='none'" onmouseover="this.style.color='var(--err)'" onmouseout="this.style.color='var(--mut)'">close</span>
+    <h2 style="color:var(--txt); margin-bottom:0.5rem; font-size:1.2rem; font-weight:600;">Time to Save</h2>
+    <p style="color:var(--mut); margin-bottom:1.5rem; font-size:0.9rem;">Please export your recent work.</p>
+    <div style="display:flex; gap:0.8rem; justify-content:center;">
+      <button class="icon-btn btn-export" style="width:auto; justify-content:center; padding:0.4rem 1.5rem; font-size:0.85rem;" onclick="saveToCSV(); document.getElementById('exportReminder').style.display='none'">
+        <span class="material-icons-round" style="font-size:1rem;">download</span> Export CSV
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+//  OVER & SHORT DASHBOARD — APP LOGIC
+// =====================================================
+
+const KEEP_COLS = ['user_id', 'container', 'asin', 'symptoms', 'quantity', 'timestamp'];
+
+// ── COMMENT SUGGESTIONS (grouped) ──────────────────
+const COMMENT_GROUPS = [
+  {
+    label: 'Receive',
+    icon: 'local_shipping',
+    color: '#10b981',
+    items: ['SHORT RECEIVE', 'OVER RECEIVE']
+  },
+  {
+    label: 'Stow',
+    icon: 'shelves',
+    color: '#ef4444',
+    items: ['SHORT STOW', 'OVER STOW']
+  },
+  {
+    label: 'SPX5',
+    icon: 'speed',
+    color: '#f59e0b',
+    items: ['SHORT SPX5', 'OVER SPX5']
+  },
+  {
+    label: 'Consolidation',
+    icon: 'pan_tool',
+    color: '#06b6d4',
+    items: ['SHORT CONSOLIDATION', 'OVER CONSOLIDATION']
+  },
+  {
+    label: 'CUBISCAN',
+    icon: 'all_inbox',
+    color: '#ec4899',
+    items: ['SHORT CUBISCAN', 'OVER CUBISCAN']
+  },
+  {
+    label: 'Problem Solve',
+    icon: 'build',
+    color: '#3b7eff',
+    items: ['SHORT IB PS', 'OVER IB PS', 'SHORT OB PS', 'OVER OB PS']
+  }
+];
+
+// Flat list (for backward compat)
+const COMMENT_SUGGESTIONS = COMMENT_GROUPS.flatMap(g => g.items);
+
+let rawData = [];
+let viewData = [];
+let userData = {};
+let currentFileHandle = null;
+let uploadTime = null;
+let activeFilter = 'all';
+let sortCol = '';
+let sortDir = 1;
+let selectedIds = new Set();
+let historyStack = [];
+let redoStack = [];
+let preEditState = null;
+let nextRowId = 0;
+let _isDraggingRow = false;
+let _dragRowState = true;
+
+const $ = id => document.getElementById(id);
+const dz = $('dropZone');
+const fi = $('fileInput');
+
+function setUploadTime(ts) {
+  const ut = $('tbUploadTime');
+  if (!ut) return;
+  if (!ts) {
+    ut.textContent = 'Upload time not available';
+    return;
+  }
+  const now = new Date(ts);
+  let hh = now.getHours();
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ampm = hh >= 12 ? 'PM' : 'AM';
+  hh = hh % 12;
+  hh = hh ? hh : 12; 
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  ut.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} at ${hh}:${mm} ${ampm}`;
+}
+
+/* ── AUTOCOMPLETE HTML BUILDER ── */
+function buildACHtml() {
+  let html = '<div class="ac-grid">';
+  COMMENT_GROUPS.forEach(group => {
+    group.items.forEach(s => {
+      html += `
+        <div class="ac-item" data-val="${s}" 
+             style="border: 1px solid ${group.color}30; color: ${group.color}; background: ${group.color}08; padding: .35rem .5rem; font-size: .72rem; font-weight: 700; cursor: pointer; text-align: center; border-radius: 6px; transition: all .15s ease; display: flex; align-items: center; justify-content: center; user-select: none;"
+             onmouseenter="this.style.background='${group.color}20'; this.style.borderColor='${group.color}60'; this.style.transform='translateY(-1px)';"
+             onmouseleave="this.style.background='${group.color}08'; this.style.borderColor='${group.color}30'; this.style.transform='none';"
+             onmousedown="__acPick(event, this)">
+          ${s}
+        </div>`;
+    });
+  });
+  html += '</div>';
+  return html;
+}
+
+/* global pick handler — reads target id from the open autocomplete */
+let _currentACTarget = null; // 'bulk' | rowId number
+
+function __acPick(e, itemEl) {
+  e.preventDefault();
+  e.stopPropagation();
+  const val = itemEl.dataset.val;
+  let inputEl = null;
+
+  if (_currentACTarget === 'bulk') {
+    inputEl = $('bulkCmt');
+    if (inputEl) { inputEl.value = val; }
+  } else if (_currentACTarget !== null) {
+    const id = _currentACTarget;
+    inputEl = $(`cmt_${id}`);
+    if (inputEl) { inputEl.value = val; onCmt(id, inputEl); }
+  }
+
+  // Hide the dropdown immediately
+  const ac = $(`ac_${_currentACTarget}`);
+  if (ac) ac.classList.remove('open');
+  // Blur the input to hide the focus outline
+  if (inputEl) inputEl.blur();
+}
+
+function openAC(id) {
+  _currentACTarget = id;
+  const ac = $(`ac_${id}`);
+  if (!ac) return;
+  if (!ac.dataset.built) {
+    ac.innerHTML = buildACHtml();
+    ac.dataset.built = '1';
+  }
+  ac.classList.add('open');
+}
+
+function closeAC(id) {
+  setTimeout(() => {
+    const ac = $(`ac_${id}`);
+    if (ac) { ac.classList.remove('open'); }
+    if (_currentACTarget === id) _currentACTarget = null;
+  }, 200);
+}
+
+/* ── THEME ── */
+(function(){
+  const t = localStorage.getItem('os_theme') || 'dark';
+  if(t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+})();
+
+function applyTheme(t) {
+  if(t === 'light'){
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.style.background = '#f0f4f8';
+    const ic = $('themeIcon'); if(ic) ic.textContent = 'dark_mode';
+    const ulIc = $('ulThemeIcon'); if(ulIc) ulIc.textContent = 'dark_mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.style.background = '#080d1a';
+    const ic = $('themeIcon'); if(ic) ic.textContent = 'light_mode';
+    const ulIc = $('ulThemeIcon'); if(ulIc) ulIc.textContent = 'light_mode';
+  }
+  
+  if (window.overallSummaryChartInstance) {
+    const txtColor = getComputedStyle(document.documentElement).getPropertyValue('--txt').trim() || (t === 'light' ? '#0f172a' : '#e2e8f0');
+    window.overallSummaryChartInstance.options.plugins.legend.labels.color = txtColor;
+    window.overallSummaryChartInstance.update();
+  }
+}
+
+function toggleTheme() {
+  const isL = document.documentElement.getAttribute('data-theme') === 'light';
+  const next = isL ? 'dark' : 'light';
+  localStorage.setItem('os_theme', next);
+  applyTheme(next);
+}
+
+window.addEventListener('DOMContentLoaded', function(){
+  const cur = localStorage.getItem('os_theme') || 'dark';
+  applyTheme(cur);
+
+  // Build bulk AC
+  const acBulk = $('ac_bulk');
+  if (acBulk) { acBulk.innerHTML = buildACHtml(); acBulk.dataset.built = '1'; }
+
+  loadState();
+
+  // Set initial upload time display
+  setUploadTime(uploadTime);
+
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && selectedIds.size > 0) {
+      toggleAll(false);
+      return;
+    }
+    if (e.ctrlKey) {
+      if (e.key === 's' || e.key === 'S') {
+        e.preventDefault(); saveToCSV();
+      } else if (e.key === 'z' || e.key === 'Z') {
+        const act = document.activeElement;
+        if (act && (act.tagName === 'TEXTAREA' || (act.tagName === 'INPUT' && ['text','search','number'].includes(act.type)))) return;
+        e.preventDefault(); undo();
+      } else if (e.key === 'y' || e.key === 'Y') {
+        const act = document.activeElement;
+        if (act && (act.tagName === 'TEXTAREA' || (act.tagName === 'INPUT' && ['text','search','number'].includes(act.type)))) return;
+        e.preventDefault(); redo();
+      }
+    }
+  });
+
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if(sortCol === col) sortDir *= -1;
+      else { sortCol = col; sortDir = 1; }
+      filt();
+    });
+  });
+
+  const tb = $('tBody');
+  if (tb) {
+    tb.addEventListener('mousedown', (e) => {
+      const td = e.target.closest('td');
+      if (!td || (td.cellIndex !== 0 && td.cellIndex !== 1)) return;
+      _isDraggingRow = true;
+      document.body.classList.add('no-select');
+      const tr = td.closest('tr');
+      const cb = tr.querySelector('.row-cb');
+      if (cb) {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') e.preventDefault();
+        _dragRowState = !cb.checked;
+        cb.checked = _dragRowState;
+        toggleRow(parseInt(cb.value), _dragRowState);
+      }
+    });
+
+    tb.addEventListener('mouseover', (e) => {
+      if (!_isDraggingRow) return;
+      const tr = e.target.closest('tr');
+      if (!tr) return;
+      const cb = tr.querySelector('.row-cb');
+      if (cb && cb.checked !== _dragRowState) {
+        cb.checked = _dragRowState;
+        toggleRow(parseInt(cb.value), _dragRowState);
+      }
+    });
+
+    tb.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox' && e.detail > 0) {
+        e.preventDefault(); // Prevent native double-toggle
+      }
+    });
+  }
+
+  document.addEventListener('mouseup', () => {
+    if (_isDraggingRow) {
+      _isDraggingRow = false;
+      document.body.classList.remove('no-select');
+    }
+  });
+});
+
+/* ── DRAG & DROP ── */
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', async e => {
+  e.preventDefault(); dz.classList.remove('over');
+  if(e.dataTransfer.items && e.dataTransfer.items[0].getAsFileSystemHandle) {
+    try {
+      const handle = await e.dataTransfer.items[0].getAsFileSystemHandle();
+      if (handle && handle.kind === 'file') currentFileHandle = handle;
+    } catch(err) {}
+  }
+  if(e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
+});
+fi.addEventListener('change', e => { if(e.target.files.length) processFiles(e.target.files); });
+
+async function browseFile() {
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: 'Spreadsheets', accept: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+          'text/csv': ['.csv'],
+          'application/vnd.ms-excel': ['.xls']
+        }}]
+      });
+      currentFileHandle = handle;
+      const file = await handle.getFile();
+      processFiles([file]);
+    } catch(e) {}
+  } else {
+    document.getElementById('fileInput').click();
+  }
+}
+
+/* ── FILE PROCESSING ── */
+function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(new Uint8Array(e.target.result));
+    reader.onerror = e => reject(e);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function processFiles(files) {
+  const validFiles = Array.from(files).filter(f => /\.(xlsx|xls|csv)$/i.test(f.name));
+  if (validFiles.length === 0) { toast('Unsupported format. Please use .csv or .xlsx', 'error'); return; }
+
+  $('uploadScreen').style.display = 'none';
+  $('loader').style.display = 'flex';
+
+  const existingMap = {};
+  rawData.forEach(r => {
+    const k = `${r.user_id}_${r.container}_${r.asin}_${r.timestamp}`;
+    if (!existingMap[k]) existingMap[k] = [];
+    existingMap[k].push(r._id);
+  });
+
+  const newRows = [];
+  for (let file of validFiles) {
+    try {
+      const data = await readFileAsArrayBuffer(file);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+      if (!json || json.length < 2) continue;
+      const fileHeaders = json[0].map(h => String(h || '').trim().toLowerCase());
+      const rows = json.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
+      const cmc = {};
+      rows.forEach(row => {
+        const obj = {};
+        KEEP_COLS.forEach(col => {
+          const fi = fileHeaders.findIndex(h => h === col.toLowerCase());
+          obj[col] = fi !== -1 ? String(row[fi] || '').trim() : '';
+        });
+        const k = `${obj.user_id}_${obj.container}_${obj.asin}_${obj.timestamp}`;
+        const c = cmc[k] || 0; cmc[k] = c + 1;
+        const existingIds = existingMap[k] || [];
+        const cmtIdx = fileHeaders.indexOf('comment');
+        const usrIdx = fileHeaders.indexOf('user');
+        const cmtVal = cmtIdx !== -1 ? String(row[cmtIdx] || '').trim() : '';
+        const usrVal = usrIdx !== -1 ? String(row[usrIdx] || '').trim() : '';
+        if (c < existingIds.length) {
+          const eid = existingIds[c];
+          if (cmtVal || usrVal) {
+            if (!userData[eid]) userData[eid] = { comment: '', user: '' };
+            if (cmtVal) userData[eid].comment = cmtVal;
+            if (usrVal) userData[eid].user = usrVal;
+          }
+        } else {
+          const rowId = nextRowId++;
+          obj._id = rowId;
+          if (cmtVal || usrVal) userData[rowId] = { comment: cmtVal, user: usrVal };
+          newRows.push(obj);
+          if (!existingMap[k]) existingMap[k] = [];
+          existingMap[k].push(rowId);
+        }
+      });
+    } catch(err) {
+      console.error(`Error reading ${file.name}:`, err);
+      toast(`Error reading ${file.name}`, 'error');
+    }
+  }
+
+  if (newRows.length > 0) {
+    historyStack.push({ rawData: [...rawData], userData: JSON.parse(JSON.stringify(userData)) });
+    if (historyStack.length > 50) historyStack.shift();
+  }
+  rawData.push(...newRows);
+  redoStack = []; preEditState = null; selectedIds.clear();
+  
+  uploadTime = new Date().getTime();
+  setUploadTime(uploadTime);
+
+  setTimeout(() => {
+    $('loader').style.display = 'none';
+    $('dashboard').style.display = 'block';
+    $('fName').textContent = validFiles.length === 1 ? validFiles[0].name : `${validFiles.length} files loaded`;
+    initDashboard();
+    toast(`${validFiles.length} file(s) loaded successfully`, 'success');
+  }, 400);
+}
+
+function initDashboard() { activeFilter = 'all'; setFilter('all'); }
+
+/* ── FILTER & SEARCH ── */
+$('sInput').addEventListener('input', filt);
+
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  const chip = $(`chip-${f}`);
+  if (chip) chip.classList.add('on');
+  
+  const sumSec = $('summarySection');
+  const tWrap = document.querySelector('.t-wrap');
+  
+  if (f === 'summary') {
+    if (sumSec) sumSec.style.display = 'block';
+    if (tWrap) tWrap.style.display = 'none';
+    $('bulkBar').classList.remove('show');
+    $('recCount').style.display = 'none';
+    renderSummaryReport();
+  } else {
+    if (sumSec) sumSec.style.display = 'none';
+    if (tWrap) tWrap.style.display = 'block';
+    filt();
+  }
+}
+
+function filt() {
+  const q = $('sInput').value.toLowerCase().trim();
+  viewData = rawData.filter(row => {
+    const symp = String(row.symptoms || '').trim().toLowerCase();
+    if (activeFilter === 'shortage' && symp !== 'shortage') return false;
+    if (activeFilter === 'overage' && symp !== 'overage') return false;
+    if (activeFilter === 'empty') {
+      const u = userData[row._id] || {};
+      if ((u.comment || '').trim()) return false;
+    }
+    if (q) {
+      const hay = `${row.user_id} ${row.container} ${row.asin}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if(sortCol) {
+    viewData.sort((a, b) => {
+      let va = (sortCol === 'comment' || sortCol === 'user')
+        ? ((userData[a._id] && userData[a._id][sortCol]) || '') : a[sortCol];
+      let vb = (sortCol === 'comment' || sortCol === 'user')
+        ? ((userData[b._id] && userData[b._id][sortCol]) || '') : b[sortCol];
+      if (sortCol === 'quantity') { va = parseInt(va,10)||0; vb = parseInt(vb,10)||0; }
+      else if (sortCol === 'timestamp') { va = va ? new Date(va).getTime():0; vb = vb ? new Date(vb).getTime():0; }
+      else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+      if(va > vb) return sortDir; if(va < vb) return -sortDir; return 0;
+    });
+  }
+
+  selectedIds.clear(); updateBulkUI();
+
+  document.querySelectorAll('th.sortable').forEach(th => {
+    const si = th.querySelector('.si');
+    if(si) {
+      if(th.dataset.col === sortCol) { si.textContent = sortDir===1?'arrow_downward':'arrow_upward'; si.style.opacity='1'; }
+      else { si.textContent='unfold_more'; si.style.opacity='0.5'; }
+    }
+  });
+
+  $('recCount').textContent = `${viewData.length.toLocaleString()} records`;
+  updateKPIs();
+  drawTable();
+}
+
+function updateKPIs() {
+  const total = rawData.length;
+  const shortage = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='shortage').length;
+  const overage  = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='overage').length;
+  let totalQty = 0;
+  rawData.forEach(r => { const q = parseInt(r.quantity,10); if(!isNaN(q)) totalQty += Math.abs(q); });
+  const filled = rawData.filter(r => (userData[r._id]?.comment||'').trim()!=='').length;
+  const pct = total > 0 ? Math.round((filled/total)*100) : 0;
+  $('kpiTotal').textContent = total.toLocaleString();
+  $('kpiShortage').textContent = shortage.toLocaleString();
+  $('kpiOverage').textContent = overage.toLocaleString();
+  $('kpiTotalQty').textContent = totalQty.toLocaleString();
+  $('kpiFilled').textContent = pct + '%';
+  const bar = $('tbProgressBar');
+  const pctEl = $('tbProgressPct');
+  if (bar) { bar.style.width = pct + '%'; if (pct > 0) bar.classList.add('has-value'); else bar.classList.remove('has-value'); }
+  if (pctEl) pctEl.textContent = pct + '%';
+  saveState();
+}
+
+/* ── STATE ── */
+function saveState() {
+  try {
+    if (!rawData.length) return;
+    localStorage.setItem('os_rawData', JSON.stringify(rawData));
+    localStorage.setItem('os_userData', JSON.stringify(userData));
+    localStorage.setItem('os_fileName', $('fName').textContent);
+    if (uploadTime) localStorage.setItem('os_uploadTime', uploadTime.toString());
+  } catch(e) { console.warn('Auto-save failed', e); }
+}
+
+function loadState() {
+  try {
+    const r = localStorage.getItem('os_rawData');
+    const u = localStorage.getItem('os_userData');
+    const f = localStorage.getItem('os_fileName');
+    const ut = localStorage.getItem('os_uploadTime');
+    if (r && u) {
+      rawData = JSON.parse(r); userData = JSON.parse(u);
+      if (rawData.length > 0) {
+        let maxId = 0;
+        rawData.forEach(row => { if(row._id > maxId) maxId = row._id; });
+        nextRowId = maxId + 1;
+        $('fName').textContent = f || 'Restored Session';
+        if (ut) { uploadTime = parseInt(ut); setUploadTime(uploadTime); }
+        $('uploadScreen').style.display = 'none';
+        $('dashboard').style.display = 'block';
+        initDashboard();
+        toast('Session restored automatically! ✨', 'success');
+        return true;
+      }
+    }
+  } catch(e) { console.error('Failed to load state', e); }
+  return false;
+}
+
+/* ── DRAW TABLE ── */
+function drawTable() {
+  const tb = $('tBody');
+  tb.innerHTML = '';
+  
+  const fcrInput = $('fcrInput');
+  const fcrBase = fcrInput ? fcrInput.value.trim() : 'https://qi-fcresearch-eu.corp.amazon.com/CAI6/results?s=';
+
+  viewData.forEach((row, idx) => {
+    const id = row._id;
+    const u = userData[id] || { comment: '', user: '' };
+    const tr = document.createElement('tr');
+
+    const rawSymp = String(row.symptoms || '').trim();
+    const sympLow = rawSymp.toLowerCase();
+    const isShort = sympLow === 'shortage';
+    const bClass = isShort ? 'badge-shortage' : 'badge-overage';
+    const displaySymp = rawSymp ? (rawSymp.charAt(0).toUpperCase() + rawSymp.slice(1).toLowerCase()) : '';
+
+    let ts = row.timestamp || '';
+    if(ts.includes('T')){ const [d,t] = ts.split('T'); ts = `${d} ${(t||'').slice(0,5)}`; }
+
+    const cFilled = (u.comment||'').trim() ? 'has-value' : '';
+    const uFilled = (u.user||'').trim() ? 'has-value' : '';
+    const isChecked = selectedIds.has(id) ? 'checked' : '';
+
+    tr.innerHTML = `
+      <td style="text-align:center;"><input type="checkbox" class="row-cb" value="${id}" onchange="toggleRow(${id},this.checked)" ${isChecked}></td>
+      <td style="text-align:center;color:var(--mut);font-size:.75rem;">${idx+1}</td>
+      <td style="font-weight:500;">
+        <div class="cell-flex">
+          <a href="${fcrBase}${encodeURIComponent(row.user_id)}" target="_blank" class="fcr-link" style="color:var(--cyan);font-weight:600;">${esc(row.user_id)}</a>
+          <span class="material-icons-round copy-btn" onclick="copyTxt('${esc(row.user_id).replace(/'/g,"\\'")}')" title="Copy">content_copy</span>
+        </div>
+      </td>
+      <td>
+        <div class="cell-flex">
+          <a href="${fcrBase}${encodeURIComponent(row.container)}" target="_blank" class="fcr-link">${esc(row.container)}</a>
+          <span class="material-icons-round copy-btn" onclick="copyTxt('${esc(row.container).replace(/'/g,"\\'")}')" title="Copy">content_copy</span>
+        </div>
+      </td>
+      <td>
+        <div class="cell-flex">
+          <a href="${fcrBase}${encodeURIComponent(row.asin)}" target="_blank" class="fcr-link">${esc(row.asin)}</a>
+          <span class="material-icons-round copy-btn" onclick="copyTxt('${esc(row.asin).replace(/'/g,"\\'")}')" title="Copy">content_copy</span>
+        </div>
+      </td>
+      <td><span class="badge ${bClass}">${esc(displaySymp)}</span></td>
+      <td style="text-align:center;font-weight:700;">${esc(row.quantity)}</td>
+      <td style="color:var(--mut);font-size:.8rem;">${esc(ts)}</td>
+      <td class="td-edit">
+        <div class="edit-wrap">
+          <input class="edit-input ${cFilled}" id="cmt_${id}" type="text" value="${esc(u.comment)}"
+            placeholder="Add comment..." autocomplete="off"
+            onkeydown="navInput(event,${idx},'cmt')"
+            oninput="onCmt(${id},this)"
+            onfocus="onInputFocus();openAC(${id})"
+            onblur="onInputBlur();closeAC(${id})">
+          <div class="autocomplete" id="ac_${id}"></div>
+        </div>
+      </td>
+      <td class="td-edit">
+        <input class="edit-input ${uFilled}" id="usr_${id}" type="text" value="${esc(u.user)}"
+          placeholder="Username..." autocomplete="off"
+          onkeydown="navInput(event,${idx},'usr')"
+          oninput="onUsr(${id},this)"
+          onfocus="onInputFocus()" onblur="onInputBlur()">
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+/* ── INLINE EDITING ── */
+function onCmt(id, el) {
+  if (!userData[id]) userData[id] = { comment: '', user: '' };
+  userData[id].comment = el.value;
+  el.classList.toggle('has-value', el.value.trim() !== '');
+  updateKPIs();
+}
+
+function onUsr(id, el) {
+  if (!userData[id]) userData[id] = { comment: '', user: '' };
+  userData[id].user = el.value;
+  el.classList.toggle('has-value', el.value.trim() !== '');
+  updateKPIs();
+}
+
+function navInput(e, idx, type) {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const next = viewData[idx+1];
+    if (next) { const el = document.getElementById(`${type}_${next._id}`); if(el) el.focus(); }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = viewData[idx-1];
+    if (prev) { const el = document.getElementById(`${type}_${prev._id}`); if(el) el.focus(); }
+  }
+}
+
+// (onBulkCmt function removed)
+
+/* ── UNDO / REDO ── */
+function onInputFocus() { preEditState = JSON.stringify(userData); }
+function onInputBlur() {
+  if (preEditState && preEditState !== JSON.stringify(userData)) {
+    historyStack.push({ rawData: [...rawData], userData: JSON.parse(preEditState) });
+    if (historyStack.length > 50) historyStack.shift();
+    redoStack = [];
+    updateUndoRedoUI();
+  }
+  preEditState = null;
+}
+function updateUndoRedoUI() {
+  const btnU = $('btnUndo'), btnR = $('btnRedo');
+  if (btnU) btnU.classList.toggle('active', historyStack.length > 0);
+  if (btnR) btnR.classList.toggle('active', redoStack.length > 0);
+}
+function undo() {
+  if (!historyStack.length) { toast('Nothing to undo', 'error'); return; }
+  redoStack.push({ rawData: [...rawData], userData: JSON.parse(JSON.stringify(userData)) });
+  if (redoStack.length > 50) redoStack.shift();
+  let state = historyStack.pop();
+  rawData = [...state.rawData]; userData = state.userData;
+  updateKPIs(); filt(); updateUndoRedoUI(); toast('Undo successful', 'success');
+}
+function redo() {
+  if (!redoStack.length) { toast('Nothing to redo', 'error'); return; }
+  historyStack.push({ rawData: [...rawData], userData: JSON.parse(JSON.stringify(userData)) });
+  if (historyStack.length > 50) historyStack.shift();
+  let state = redoStack.pop();
+  rawData = [...state.rawData]; userData = state.userData;
+  updateKPIs(); filt(); updateUndoRedoUI(); toast('Redo successful', 'success');
+}
+
+/* ── BULK EDITING ── */
+function toggleRow(id, checked) { if(checked) selectedIds.add(id); else selectedIds.delete(id); updateBulkUI(); }
+function toggleAll(checked) {
+  if (checked) viewData.forEach(r => selectedIds.add(r._id)); else selectedIds.clear();
+  document.querySelectorAll('.row-cb').forEach(cb => cb.checked = checked);
+  updateBulkUI();
+}
+function updateBulkUI() {
+  const sz = selectedIds.size;
+  const cbAll = $('cbAll');
+  if (cbAll) cbAll.checked = (sz > 0 && sz === viewData.length);
+  if (sz > 0) { $('bulkBar').classList.add('show'); $('recCount').style.display='none'; $('selCount').textContent=`${sz} selected`; }
+  else { $('bulkBar').classList.remove('show'); $('recCount').style.display='block'; }
+}
+function applyBulk() {
+  const c = $('bulkCmt').value.trim();
+  const u = $('bulkUsr').value.trim();
+  
+  historyStack.push({ rawData: [...rawData], userData: JSON.parse(JSON.stringify(userData)) });
+  if (historyStack.length > 50) historyStack.shift();
+  redoStack = [];
+  
+  selectedIds.forEach(id => {
+    if (!userData[id]) userData[id] = { comment: '', user: '' };
+    if (!c && !u) {
+      userData[id].comment = '';
+      userData[id].user = '';
+    } else {
+      if (c) userData[id].comment = c;
+      if (u) userData[id].user = u;
+    }
+  });
+  
+  toast(`Applied to ${selectedIds.size} records`, 'success');
+  selectedIds.clear(); 
+  $('bulkCmt').value=''; 
+  $('bulkUsr').value='';
+  
+  updateBulkUI(); updateKPIs(); updateUndoRedoUI(); drawTable();
+}
+
+function deleteBulk() {
+  if (selectedIds.size === 0) return;
+  if (!confirm(`Are you sure you want to delete ${selectedIds.size} selected row(s)? You can undo this action.`)) return;
+  
+  historyStack.push({ rawData: [...rawData], userData: JSON.parse(JSON.stringify(userData)) });
+  if (historyStack.length > 50) historyStack.shift();
+  redoStack = [];
+  
+  rawData = rawData.filter(r => !selectedIds.has(r._id));
+  
+  selectedIds.forEach(id => {
+    delete userData[id];
+  });
+  
+  toast(`Deleted ${selectedIds.size} records`, 'success');
+  selectedIds.clear();
+  filt();
+}
+
+
+/* ── EXPORT ── */
+async function saveToCSV() {
+  if(!rawData.length) { toast('No data to export', 'error'); return; }
+  const cols = [...KEEP_COLS, 'comment', 'user'];
+  const BOM = '\uFEFF';
+  const csvRows = rawData.map(row => {
+    const u = userData[row._id] || {};
+    return cols.map(h => {
+      const v = h==='comment' ? (u.comment||'') : h==='user' ? (u.user||'') : (row[h]||'');
+      const s = String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g,'""')}"` : s;
+    }).join(',');
+  });
+  const csv = BOM + [cols.join(','), ...csvRows].join('\n');
+  if (currentFileHandle && currentFileHandle.createWritable) {
+    try {
+      const writable = await currentFileHandle.createWritable();
+      await writable.write(csv); await writable.close();
+      toast('Saved directly to original file! ✨', 'success'); return;
+    } catch(err) { if(err.name !== 'AbortError') fallbackDownload(csv); }
+  } else { fallbackDownload(csv); }
+}
+
+function fallbackDownload(csv) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `Over and Short_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('File downloaded', 'success');
+}
+
+/* ── RESET ── */
+function resetAll() {
+  rawData=[]; viewData=[]; userData={}; activeFilter='all'; selectedIds.clear();
+  historyStack=[]; redoStack=[]; preEditState=null; nextRowId=0; currentFileHandle=null;
+  localStorage.removeItem('os_rawData'); localStorage.removeItem('os_userData'); localStorage.removeItem('os_fileName'); localStorage.removeItem('os_uploadTime');
+  uploadTime = null; setUploadTime(null);
+  $('uploadScreen').style.display='flex'; $('dashboard').style.display='none';
+  $('fileInput').value=''; $('sInput').value=''; $('fName').textContent='—';
+}
+
+/* ── UTILS ── */
+let _tt;
+function toast(msg, type='') {
+  const el = $('toast');
+  el.textContent = msg; el.className = `toast visible ${type}`;
+  clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('visible'), 3000);
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function copyTxt(txt) {
+  navigator.clipboard.writeText(txt).then(() => toast('Copied: '+txt,'success')).catch(()=>toast('Failed to copy','error'));
+}
+
+// Export Reminder Timer (2 hours)
+setInterval(() => {
+  if (rawData && rawData.length > 0) {
+    document.getElementById('exportReminder').style.display = 'flex';
+  }
+}, 2 * 60 * 60 * 1000);
+
+/* ── SUMMARY REPORT ── */
+function renderSummaryReport() {
+  const container = $('summaryChartContainer');
+  container.innerHTML = '';
+  
+  if (rawData.length === 0) {
+    container.innerHTML = '<div style="color:var(--mut); text-align:center; padding: 1rem;">No data available. Please upload a file.</div>';
+    return;
+  }
+
+  const counts = {};
+  const breakdown = {};
+  const catUsers = {};
+  let totalErrors = 0;
+  
+  rawData.forEach(row => {
+    const u = userData[row._id] || {};
+    let cmt = String(u.comment || '').trim().toUpperCase();
+    
+    if (!cmt) cmt = 'UNCATEGORIZED';
+    
+    let cat = cmt;
+    if (cat !== 'UNCATEGORIZED') {
+      cat = cat.replace(/^SHORT\s+/i, '').replace(/^OVER\s+/i, '').trim();
+      if (cat === 'OB PS') cat = 'OUTBOUND PS';
+      if (cat === 'IB PS') cat = 'INBOUND PS';
+    }
+    
+    counts[cat] = (counts[cat] || 0) + 1;
+    
+    if (!breakdown[cat]) breakdown[cat] = { short: 0, over: 0 };
+    const sym = String(row.symptoms || '').trim().toLowerCase();
+    if (sym === 'shortage') breakdown[cat].short++;
+    else if (sym === 'overage') breakdown[cat].over++;
+    
+    if (!catUsers[cat]) catUsers[cat] = {};
+    const uId = String(row.user_id || 'UNKNOWN').trim();
+    catUsers[cat][uId] = (catUsers[cat][uId] || 0) + 1;
+    
+    totalErrors++;
+  });
+
+  if (totalErrors === 0) return;
+
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  
+  const widget = document.createElement('div');
+  widget.className = 'chart-widget';
+  widget.innerHTML = `<div class="chart-widget-title">Root Cause Distribution</div>`;
+  
+  const colorGradients = [
+    'linear-gradient(90deg, #3b82f6, #06b6d4)', // Blue to Cyan
+    'linear-gradient(90deg, #ef4444, #f97316)', // Red to Orange
+    'linear-gradient(90deg, #10b981, #34d399)', // Green to Emerald
+    'linear-gradient(90deg, #8b5cf6, #d946ef)', // Violet to Fuchsia
+    'linear-gradient(90deg, #f59e0b, #fbbf24)', // Amber to Yellow
+    'linear-gradient(90deg, #ec4899, #f43f5e)', // Pink to Rose
+    'linear-gradient(90deg, #6366f1, #818cf8)'  // Indigo
+  ];
+
+  sorted.forEach((item, index) => {
+    const cat = item[0];
+    const count = item[1];
+    const pctVal = (count / totalErrors) * 100;
+    const pctStr = pctVal.toFixed(1);
+    const bd = breakdown[cat];
+    
+    const bg = colorGradients[index % colorGradients.length];
+    
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'chart-row';
+    rowDiv.innerHTML = `
+      <div class="chart-label" title="${esc(cat)}">${esc(cat)}</div>
+      <div class="chart-bar-container">
+        <div class="chart-bar" style="width: 0%; background: ${bg};" data-target="${pctVal}%"></div>
+      </div>
+      <div class="chart-value">${count} <span style="font-size:0.75rem;">(${pctStr}%)</span></div>
+      <div class="chart-breakdown">
+        <div class="bd-badge" style="color: var(--txt);" title="Shortage"><span style="color:var(--pri); font-size:0.6rem; margin-right:2px;">SHORT</span> ${bd.short}</div>
+        <div class="bd-badge" style="color: var(--txt);" title="Overage"><span style="color:var(--err); font-size:0.6rem; margin-right:2px;">OVER</span> ${bd.over}</div>
+      </div>
+    `;
+    widget.appendChild(rowDiv);
+  });
+  
+  container.appendChild(widget);
+
+  // Overall Summary Widget
+  const total = rawData.length;
+  const shortage = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='shortage').length;
+  const overage  = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='overage').length;
+  const unreviewed = rawData.filter(r => (userData[r._id]?.comment||'').trim()==='').length;
+
+  const summaryWidget = document.createElement('div');
+  summaryWidget.className = 'chart-widget';
+  
+  const summaryItems = [
+    { label: 'Total', count: total, color: '#f97316' },
+    { label: 'Unreviewed', count: unreviewed, color: '#f97316' },
+    { label: 'Shortage', count: shortage, color: '#3b7eff' },
+    { label: 'Overage', count: overage, color: '#ef4444' }
+  ];
+
+  let cardsHtml = `<div class="chart-widget-title" style="margin-bottom: 8px;">Overall Summary</div>
+                   <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
+                     <div style="flex: 1; min-width: 250px;">
+                       <div class="summary-cards-grid">`;
+                   
+  summaryItems.forEach(item => {
+    const pctVal = total > 0 ? (item.count / total) * 100 : 0;
+    const pctStr = pctVal.toFixed(1);
+    
+    cardsHtml += `
+      <div class="summary-card">
+        <div class="sc-title">${item.label}</div>
+        <div class="sc-val" style="color: ${item.color};">${item.count}</div>
+        <div class="sc-pct">(${pctStr}%)</div>
+      </div>
+    `;
+  });
+  
+  cardsHtml += `       </div>
+                     </div>
+                     <div style="flex: 1.5; min-width: 320px; min-height: 200px; display: flex; align-items: flex-start; padding-top: 6px; justify-content: flex-end;">
+                       <canvas id="overallSummaryChart" style="width: 100%; height: 200px;"></canvas>
+                     </div>
+                   </div>`;
+  summaryWidget.innerHTML = cardsHtml;
+  
+  // Insert before the root cause widget so it appears on the left/first
+  container.insertBefore(summaryWidget, widget);
+
+  setTimeout(() => {
+    const ctx = document.getElementById('overallSummaryChart');
+    if (ctx && window.Chart) {
+      const txtColor = getComputedStyle(document.documentElement).getPropertyValue('--txt').trim() || '#e2e8f0';
+      
+      const chartData = sorted.map(item => item[1]);
+      const totalErrors = chartData.reduce((sum, val) => sum + val, 0);
+      
+      const chartLabels = sorted.map(item => {
+        const cat = item[0];
+        const count = item[1];
+        const pct = totalErrors > 0 ? ((count / totalErrors) * 100).toFixed(1) + '%' : '0%';
+        return `${cat}: ${count} (${pct})`;
+      });
+
+      const colorStops = [
+        ['#3b82f6', '#06b6d4'], // Blue to Cyan
+        ['#ef4444', '#f97316'], // Red to Orange
+        ['#10b981', '#34d399'], // Green to Emerald
+        ['#8b5cf6', '#d946ef'], // Violet to Fuchsia
+        ['#f59e0b', '#fbbf24'], // Amber to Yellow
+        ['#ec4899', '#f43f5e'], // Pink to Rose
+        ['#6366f1', '#818cf8']  // Indigo
+      ];
+
+      window.overallSummaryChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            data: chartData,
+            backgroundColor: function(context) {
+              const chart = context.chart;
+              const {ctx, chartArea} = chart;
+              if (!chartArea) return '#3b82f6';
+              const index = context.dataIndex;
+              const stops = colorStops[index % colorStops.length];
+              const g = ctx.createLinearGradient(chartArea.left, chartArea.top, chartArea.right, chartArea.bottom);
+              g.addColorStop(0, stops[0]);
+              g.addColorStop(1, stops[1]);
+              return g;
+            },
+            borderWidth: 0,
+            borderRadius: 1,
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          events: [],
+          animation: false,
+          layout: {
+            padding: { top: 5, bottom: 5, left: 5, right: 5 }
+          },
+          plugins: {
+            legend: {
+              position: 'right',
+              align: 'center',
+              labels: { 
+                color: txtColor, 
+                font: { family: 'Inter', size: 11, weight: '500', lineHeight: 1.5 },
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 7,
+                padding: 8
+              }
+            },
+            tooltip: { enabled: false }
+          }
+        },
+        plugins: [{
+          id: 'centerText',
+          beforeDraw: function(chart) {
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return;
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data || !meta.data.length) return;
+            const x = meta.data[0].x;
+            const y = meta.data[0].y;
+            
+            ctx.restore();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const txtCol = getComputedStyle(document.documentElement).getPropertyValue('--txt').trim() || '#e2e8f0';
+            const subCol = getComputedStyle(document.documentElement).getPropertyValue('--mut').trim() || '#64748b';
+            
+            ctx.font = '800 32px Inter';
+            ctx.fillStyle = txtCol;
+            ctx.fillText(totalErrors, x, y - 8);
+            
+            ctx.font = '700 11px Inter';
+            ctx.fillStyle = subCol;
+            ctx.fillText('TOTAL DEFECTS', x, y + 18);
+            ctx.save();
+          }
+        }]
+      });
+    }
+  }, 100);
+  
+  // Top Users Widget
+  const usersWidget = document.createElement('div');
+  usersWidget.className = 'chart-widget chart-widget--full';
+  usersWidget.innerHTML = `<div class="chart-widget-title">Top Users by Department</div>`;
+  
+  const usersGrid = document.createElement('div');
+  usersGrid.className = 'dept-cards-grid';
+  
+  sorted.forEach((item, index) => {
+    const cat = item[0];
+    const catTotal = item[1];
+    const usersMap = catUsers[cat] || {};
+    const sortedUsers = Object.entries(usersMap).sort((a,b) => b[1] - a[1]);
+    const topUsers = sortedUsers;
+    const bg = colorGradients[index % colorGradients.length];
+    
+    const card = document.createElement('div');
+    card.className = 'dept-card';
+    
+    let html = `
+      <div class="dept-card-header">
+        <div class="dept-card-title">${esc(cat)}</div>
+        <div class="dept-card-total" style="background: ${bg}; -webkit-background-clip: text; color: transparent;">${catTotal} DEFECTS</div>
+      </div>
+    `;
+    
+    topUsers.forEach(uArr => {
+      const uName = uArr[0];
+      const uCount = uArr[1];
+      const uPct = ((uCount / catTotal) * 100).toFixed(1);
+      
+      html += `
+        <div class="user-row">
+          <div class="user-name" title="${esc(uName)}" style="cursor:pointer;" onclick="openUserPopup('${esc(uName).replace(/'/g,"\\'")}', event)">${esc(uName)}</div>
+          <div class="user-bar-container">
+            <div class="user-bar" style="background: ${bg}; width: 0%;" data-target="${uPct}%"></div>
+          </div>
+          <div class="user-count">${uCount}</div>
+          <div class="user-pct">(${uPct}%)</div>
+        </div>
+      `;
+    });
+    card.innerHTML = html;
+    usersGrid.appendChild(card);
+  });
+  
+  usersWidget.appendChild(usersGrid);
+  container.appendChild(usersWidget);
+  
+  setTimeout(() => {
+    const bars = container.querySelectorAll('.chart-bar, .user-bar');
+    bars.forEach(bar => {
+      bar.style.width = bar.getAttribute('data-target');
+    });
+  }, 50);
+}
+</script>
+<!-- USER POPUP -->
+<div id="userPopup" style="
+  display:none; position:fixed; z-index:9999;
+  background:var(--s1); border:1px solid var(--brd);
+  border-radius:14px; padding:0; min-width:340px; max-width:420px;
+  box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06);
+  overflow:hidden; animation: popupIn .18s cubic-bezier(0.16,1,0.3,1);
+">
+  <div id="upHeader" style="padding:1rem 1.2rem .8rem; background:linear-gradient(135deg,rgba(59,126,255,.12),rgba(124,58,237,.08)); border-bottom:1px solid var(--brd); display:flex; align-items:center; gap:.7rem;">
+    <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--pri),var(--acc));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <span class="material-icons-round" style="font-size:1.1rem;color:#fff;">person</span>
+    </div>
+    <div>
+      <div id="upUserId" style="font-size:.95rem;font-weight:700;color:#fff;"></div>
+      <div style="font-size:.7rem;color:var(--mut);">User Profile</div>
+    </div>
+    <span class="material-icons-round" onclick="closeUserPopup()" style="margin-left:auto;cursor:pointer;color:var(--mut);font-size:1.1rem;transition:.2s;" onmouseover="this.style.color='var(--err)'" onmouseout="this.style.color='var(--mut)'">close</span>
+  </div>
+  <div style="padding:1rem 1.2rem; display:flex; flex-direction:column; gap:.5rem;" id="upStats"></div>
+  <div style="padding:.5rem 1.2rem .8rem;">
+    <div style="font-size:.7rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">Records</div>
+    <div id="upRecords" style="display:flex;flex-direction:column;gap:.4rem;max-height:220px;overflow-y:auto;"></div>
+  </div>
+</div>
+<div id="userPopupOverlay" onclick="closeUserPopup()" style="display:none;position:fixed;inset:0;z-index:9998;"></div>
+
+<style>
+@keyframes popupIn {
+  from { opacity:0; transform:scale(.95) translateY(6px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.up-record {
+  background:var(--s2); border:1px solid var(--brd); border-radius:8px;
+  padding:.5rem .7rem; font-size:.75rem; display:flex; flex-direction:column; gap:.25rem;
+}
+.up-record-top { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.up-stat-row { display:flex; align-items:center; justify-content:space-between; background:var(--s2); border-radius:8px; padding:.45rem .7rem; font-size:.78rem; }
+.up-stat-label { color:var(--mut); font-weight:500; }
+.up-stat-val { font-weight:700; }
+</style>
+
+<script>
+function openUserPopup(userId, event) {
+  event.stopPropagation();
+  const userRows = rawData.filter(r => String(r.user_id||'').trim() === userId);
+  if (!userRows.length) return;
+
+  const shortCount = userRows.filter(r => String(r.symptoms||'').trim().toLowerCase() === 'shortage').length;
+  const overCount  = userRows.filter(r => String(r.symptoms||'').trim().toLowerCase() === 'overage').length;
+  const totalQty   = userRows.reduce((s,r) => s + (parseFloat(r.quantity)||0), 0);
+
+  document.getElementById('upUserId').textContent = userId;
+
+  document.getElementById('upStats').innerHTML = `
+    <div style="display:flex;gap:.5rem;">
+      <div class="up-stat-row" style="flex:1;">
+        <span class="up-stat-label">Total</span>
+        <span class="up-stat-val" style="color:var(--warn)">${userRows.length}</span>
+      </div>
+      <div class="up-stat-row" style="flex:1;">
+        <span class="up-stat-label">Shortages</span>
+        <span class="up-stat-val" style="color:var(--pri)">${shortCount}</span>
+      </div>
+      <div class="up-stat-row" style="flex:1;">
+        <span class="up-stat-label">Overages</span>
+        <span class="up-stat-val" style="color:var(--err)">${overCount}</span>
+      </div>
+    </div>
+  `;
+
+  const recEl = document.getElementById('upRecords');
+  recEl.innerHTML = userRows.map(r => {
+    const symp = String(r.symptoms||'').trim();
+    const sympLow = symp.toLowerCase();
+    const color = sympLow === 'shortage' ? 'var(--pri)' : 'var(--err)';
+    let ts = r.timestamp || '';
+    if(ts.includes('T')){ const [d,t] = ts.split('T'); ts = `${d} ${(t||'').slice(0,5)}`; }
+    const ud = userData[r._id] || {};
+    return `
+      <div class="up-record">
+        <div class="up-record-top">
+          <span style="background:rgba(59,126,255,.12);color:var(--cyan);font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;">${esc(r.container||'')}</span>
+          <span style="background:rgba(124,58,237,.12);color:#a78bfa;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;">${esc(r.asin||'')}</span>
+          <span style="color:${color};font-size:.68rem;font-weight:700;margin-left:auto;">${esc(symp)}</span>
+          <span style="color:var(--mut);font-size:.68rem;">Qty: <b style="color:var(--txt)">${esc(r.quantity||'')}</b></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+          <span style="color:var(--mut);font-size:.68rem;">${esc(ts)}</span>
+          ${ud.comment ? `<span style="color:var(--ok);font-size:.68rem;">💬 ${esc(ud.comment)}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const popup = document.getElementById('userPopup');
+  popup.style.display = 'block';
+  document.getElementById('userPopupOverlay').style.display = 'block';
+
+  // Position near click
+  const x = event.clientX, y = event.clientY;
+  const pw = 420, ph = 480;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  popup.style.left = Math.min(x + 12, vw - pw - 16) + 'px';
+  popup.style.top  = Math.min(y + 12, vh - ph - 16) + 'px';
+}
+
+function closeUserPopup() {
+  document.getElementById('userPopup').style.display = 'none';
+  document.getElementById('userPopupOverlay').style.display = 'none';
+}
+</script>
+</body>
+</html>
+
+
