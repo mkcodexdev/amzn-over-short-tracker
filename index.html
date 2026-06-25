@@ -540,21 +540,20 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-left: auto; /* Push to right */
+    margin-left: auto;
   }
   .summary-section {
     background: var(--s1);
     border: 1px solid var(--brd);
-    border-radius: 12px;
-    padding: 1.5rem 1.75rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    margin: 0.75rem 2rem 1.5rem;
+    animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.03);
     display: none;
   }
   @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
+    from { opacity: 0; transform: translateY(-12px); }
     to { opacity: 1; transform: translateY(0); }
   }
   .summary-header {
@@ -562,163 +561,305 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--brd);
   }
   .summary-header h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     margin: 0;
     color: var(--txt);
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: -.02em;
   }
+  .summary-header h2 .material-icons-round { font-size: 1.1rem; color: var(--pri); }
+  .summary-header-sub { font-size: 0.72rem; color: var(--mut); font-weight: 400; margin-left: 4px; }
   .summary-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 1.25rem;
   }
+
+  /* ── CHART WIDGET ── */
   .chart-widget {
     background: var(--bg);
     border: 1px solid var(--brd);
-    border-radius: 8px;
-    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    transition: box-shadow 0.2s;
   }
-  .chart-widget--full {
-    grid-column: 1 / -1;
-  }
+  .chart-widget:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+  .chart-widget--full { grid-column: 1 / -1; }
   .chart-widget-title {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: var(--mut);
-    margin-bottom: 24px;
+    margin-bottom: 14px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
+  .chart-widget-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: var(--pri);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── CHART ROWS (Root Cause) ── */
   .chart-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 2px;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
   }
+  .chart-row:last-child { border-bottom: none; }
+  [data-theme="light"] .chart-row { border-bottom-color: rgba(0,0,0,0.04); }
+
   .chart-label {
     width: 120px;
-    font-size: 0.75rem;
-    font-weight: 400;
+    flex-shrink: 0;
+    font-size: 0.73rem;
+    font-weight: 600;
     color: var(--txt);
-    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .chart-bar-container {
     flex: 1;
-    background: var(--s2);
-    border-radius: 6px;
-    height: 16px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    height: 20px;
     position: relative;
     overflow: hidden;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
   }
+  [data-theme="light"] .chart-bar-container { background: var(--s2); }
   .chart-bar {
     height: 100%;
-    border-radius: 6px;
-    background: linear-gradient(90deg, var(--pri), var(--cyan));
-    display: flex;
-    align-items: center;
-    padding-right: 6px;
-    justify-content: flex-end;
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 500;
+    border-radius: 8px;
     transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
     width: 0;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
   }
-  .chart-bar.short { background: linear-gradient(90deg, #ef4444, #f97316); }
-  .chart-bar.over { background: linear-gradient(90deg, #10b981, #06b6d4); }
-  .chart-value {
-    width: 80px;
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--txt);
-  }
-  .chart-breakdown {
+
+  /* Stats section: count + pct + short + over — fixed widths, all aligned */
+  .chart-stats {
     display: flex;
-    gap: 8px;
-    width: 100px;
     align-items: center;
-    justify-content: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .chart-count {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--txt);
+    min-width: 28px;
+    text-align: right;
+    letter-spacing: -0.02em;
+  }
+  .chart-pct {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--mut);
+    min-width: 52px;
+    text-align: left;
   }
   .bd-badge {
     display: flex;
     align-items: center;
-    gap: 3px;
-    font-size: 0.75rem;
-    font-weight: 500;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.04);
+    padding: 3px 8px;
+    border-radius: 6px;
+    min-width: 72px;
+    justify-content: space-between;
   }
+  .bd-badge .bd-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  [data-theme="light"] .bd-badge { background: var(--s2); border: 1px solid var(--brd); }
+
+  /* ── OVERALL SUMMARY CARDS ── */
   .summary-cards-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 10px;
     margin-top: 0;
   }
   .summary-card {
-    background: var(--bg);
+    background: rgba(255,255,255,0.03);
     border: 1px solid var(--brd);
-    border-radius: 8px;
-    padding: 10px 8px;
+    border-radius: 10px;
+    padding: 14px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
   }
-  .summary-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--pri));
+    border-radius: 2px 2px 0 0;
+    opacity: 0.7;
   }
+  [data-theme="light"] .summary-card { background: var(--s2); }
+  .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-color: rgba(255,255,255,0.12); }
   .sc-title {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: var(--mut);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    font-weight: 700;
   }
   .sc-val {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1;
+    letter-spacing: -0.04em;
   }
   .sc-pct {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--mut);
-    margin-top: 4px;
+    margin-top: 5px;
     font-weight: 500;
   }
 
-  .dept-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px; }
-  .dept-card { background: var(--bg); border: 1px solid var(--brd); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-  .dept-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--brd); }
-  .dept-card-title { font-size: 0.8rem; font-weight: 700; color: var(--txt); text-transform: uppercase; }
-  .dept-card-total { font-size: 0.75rem; font-weight: 700; }
-  .user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  /* ── DEPT / USER CARDS ── */
+  .dept-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .dept-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--brd);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s;
+  }
+  [data-theme="light"] .dept-card { background: var(--s2); }
+  .dept-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+  .dept-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--brd);
+  }
+  .dept-card-title { font-size: 0.72rem; font-weight: 700; color: var(--txt); text-transform: uppercase; letter-spacing: 0.06em; }
+  .dept-card-total { font-size: 0.7rem; font-weight: 700; }
+  .user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .user-row:last-child { margin-bottom: 0; }
-  .user-name { width: 90px; font-size: 0.75rem; font-weight: 400; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  [data-theme="light"] .user-name { color: #334155; }
-  .user-bar-container { flex: 1; background: var(--s2); height: 6px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+  .user-name {
+    width: 95px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--mut);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s;
+  }
+  .user-name:hover { color: var(--pri); }
+  [data-theme="light"] .user-name { color: #475569; }
+  .user-bar-container {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    height: 7px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  [data-theme="light"] .user-bar-container { background: var(--s1); border: 1px solid var(--brd); }
   .user-bar { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); width: 0; }
-  .user-count { width: 30px; text-align: right; font-size: 0.75rem; font-weight: 700; color: var(--txt); }
-  .user-pct { width: 45px; text-align: right; font-size: 0.65rem; font-weight: 500; color: var(--pri); }
+  .user-count { width: 30px; text-align: right; font-size: 0.73rem; font-weight: 700; color: var(--txt); }
+  .user-pct { width: 48px; text-align: right; font-size: 0.63rem; font-weight: 600; color: var(--mut); }
 
 .bulk-btn { background: var(--pri); color: #fff; border: none; border-radius: 6px; padding: .35rem .85rem; font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .2s; }
 .bulk-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* ── TREND CHART ── */
+.trend-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.trend-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--brd);
+  border-radius: 6px;
+  color: var(--mut);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: 'Inter', sans-serif;
+}
+[data-theme="light"] .trend-toggle-btn { background: var(--s1); }
+.trend-toggle-btn:hover { border-color: var(--pri); color: var(--pri); }
+.trend-toggle-btn.active {
+  background: rgba(59,126,255,0.12);
+  border-color: rgba(59,126,255,0.4);
+  color: var(--pri);
+}
+.trend-stats-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--brd);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+[data-theme="light"] .trend-stats-row { background: var(--s2); }
+.trend-stat-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+.trend-stat-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
 
 </style>
 </head>
@@ -792,7 +933,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
       </div>
 
       <div class="upload-right">
-        <div class="drop-zone" id="dropZone" onclick="browseFile()">
+        <label for="fileInput" class="drop-zone" id="dropZone">
           <div class="dz-icon-wrap">
             <span class="material-icons-round dz-icon">cloud_upload</span>
           </div>
@@ -812,12 +953,14 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
             <span class="material-icons-round">drag_indicator</span>
             Drag your file directly into this area
           </div>
-        </div>
+        </label>
       </div>
     </div>
   </div>
-  <input type="file" id="fileInput" accept=".csv, .xlsx, .xls" multiple>
+
 </div>
+
+<input type="file" id="fileInput" accept=".csv, .xlsx, .xls" multiple style="display:none;">
 
 <div id="loader">
   <div class="spinner"></div>
@@ -898,7 +1041,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
       <div class="kpi-text">
         <div class="kpi-label">Shortages</div>
         <div class="kpi-val" id="kpiShortage">0</div>
-        <div class="kpi-sub">Missing items</div>
+        <div class="kpi-sub">Shortage qty</div>
       </div>
     </div>
     <div class="kpi c-red">
@@ -906,7 +1049,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
       <div class="kpi-text">
         <div class="kpi-label">Overages</div>
         <div class="kpi-val" id="kpiOverage">0</div>
-        <div class="kpi-sub">Extra items</div>
+        <div class="kpi-sub">Overage qty</div>
       </div>
     </div>
     <div class="kpi c-orange">
@@ -957,8 +1100,11 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 
   <div class="summary-section" id="summarySection">
     <div class="summary-header">
-      <h2><span class="material-icons-round" style="color:var(--pri);">analytics</span> Summary Report <span style="font-size:0.8rem; font-weight:400; color:var(--mut);"> (Impact by Root Cause)</span></h2>
-      <button class="icon-btn" onclick="setFilter('all')" title="Close"><span class="material-icons-round">close</span></button>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <h2><span class="material-icons-round">analytics</span> Summary Report <span class="summary-header-sub">(Impact by Root Cause)</span></h2>
+        <a href="https://over-short-dashboard.vercel.app/" target="_blank" class="icon-btn" style="text-decoration:none;font-size:.78rem;font-weight:600;">📊 Over & Short Dashboard</a>
+      </div>
+      <button class="icon-btn" onclick="setFilter('all')" title="Close" style="padding:.35rem .6rem;"><span class="material-icons-round" style="font-size:.9rem;">close</span></button>
     </div>
     <div class="summary-body" id="summaryChartContainer">
       <!-- chart bars will be injected here -->
@@ -1179,6 +1325,11 @@ function applyTheme(t) {
     window.overallSummaryChartInstance.options.plugins.legend.labels.color = txtColor;
     window.overallSummaryChartInstance.update();
   }
+
+  // Rebuild trend chart so colors update with theme
+  if (typeof buildTrendChart === 'function') {
+    setTimeout(buildTrendChart, 50);
+  }
 }
 
 function toggleTheme() {
@@ -1290,22 +1441,7 @@ dz.addEventListener('drop', async e => {
 fi.addEventListener('change', e => { if(e.target.files.length) processFiles(e.target.files); });
 
 async function browseFile() {
-  if (window.showOpenFilePicker) {
-    try {
-      const [handle] = await window.showOpenFilePicker({
-        types: [{ description: 'Spreadsheets', accept: {
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-          'text/csv': ['.csv'],
-          'application/vnd.ms-excel': ['.xls']
-        }}]
-      });
-      currentFileHandle = handle;
-      const file = await handle.getFile();
-      processFiles([file]);
-    } catch(e) {}
-  } else {
-    document.getElementById('fileInput').click();
-  }
+  document.getElementById('fileInput').click();
 }
 
 /* ── FILE PROCESSING ── */
@@ -1471,10 +1607,14 @@ function filt() {
 
 function updateKPIs() {
   const total = rawData.length;
-  const shortage = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='shortage').length;
-  const overage  = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='overage').length;
-  let totalQty = 0;
-  rawData.forEach(r => { const q = parseInt(r.quantity,10); if(!isNaN(q)) totalQty += Math.abs(q); });
+  let shortage = 0, overage = 0, totalQty = 0;
+  rawData.forEach(r => {
+    const q = Math.abs(parseFloat(r.quantity) || 0);
+    const sym = String(r.symptoms||'').trim().toLowerCase();
+    if (sym === 'shortage') shortage += q;
+    if (sym === 'overage')  overage  += q;
+    totalQty += q;
+  });
   const filled = rawData.filter(r => (userData[r._id]?.comment||'').trim()!=='').length;
   const pct = total > 0 ? Math.round((filled/total)*100) : 0;
   $('kpiTotal').textContent = total.toLocaleString();
@@ -1812,18 +1952,27 @@ function renderSummaryReport() {
       if (cat === 'IB PS') cat = 'INBOUND PS';
     }
     
-    counts[cat] = (counts[cat] || 0) + 1;
+    const qty = Math.abs(parseFloat(row.quantity) || 0);
+    counts[cat] = (counts[cat] || 0) + qty;
     
     if (!breakdown[cat]) breakdown[cat] = { short: 0, over: 0 };
     const sym = String(row.symptoms || '').trim().toLowerCase();
-    if (sym === 'shortage') breakdown[cat].short++;
-    else if (sym === 'overage') breakdown[cat].over++;
+    if (sym === 'shortage') breakdown[cat].short += qty;
+    else if (sym === 'overage') breakdown[cat].over += qty;
     
+    // SPX5 - skip from Top Users widget
+    if (cat === 'SPX5') { totalErrors += qty; return; }
+
     if (!catUsers[cat]) catUsers[cat] = {};
-    const uId = String(row.user_id || 'UNKNOWN').trim();
-    catUsers[cat][uId] = (catUsers[cat][uId] || 0) + 1;
+    let uId;
+    if (cat === 'STOW') {
+      uId = String(row.user_id || '').trim() || 'Unknown';
+    } else {
+      uId = String(u.user || '').trim() || 'Unknown';
+    }
+    catUsers[cat][uId] = (catUsers[cat][uId] || 0) + qty;
     
-    totalErrors++;
+    totalErrors += qty;
   });
 
   if (totalErrors === 0) return;
@@ -1832,7 +1981,7 @@ function renderSummaryReport() {
   
   const widget = document.createElement('div');
   widget.className = 'chart-widget';
-  widget.innerHTML = `<div class="chart-widget-title">Root Cause Distribution</div>`;
+  widget.innerHTML = `<div class="chart-widget-title">Defect Breakdown</div>`;
   
   const colorGradients = [
     'linear-gradient(90deg, #3b82f6, #06b6d4)', // Blue to Cyan
@@ -1860,10 +2009,17 @@ function renderSummaryReport() {
       <div class="chart-bar-container">
         <div class="chart-bar" style="width: 0%; background: ${bg};" data-target="${pctVal}%"></div>
       </div>
-      <div class="chart-value">${count} <span style="font-size:0.75rem;">(${pctStr}%)</span></div>
-      <div class="chart-breakdown">
-        <div class="bd-badge" style="color: var(--txt);" title="Shortage"><span style="color:var(--pri); font-size:0.6rem; margin-right:2px;">SHORT</span> ${bd.short}</div>
-        <div class="bd-badge" style="color: var(--txt);" title="Overage"><span style="color:var(--err); font-size:0.6rem; margin-right:2px;">OVER</span> ${bd.over}</div>
+      <div class="chart-stats">
+        <span class="chart-count">${count}</span>
+        <span class="chart-pct">(${pctStr}%)</span>
+        <div class="bd-badge">
+          <span class="bd-label" style="color:var(--pri);">SHORT</span>
+          <span style="color:var(--txt); font-weight:800;">${bd.short}</span>
+        </div>
+        <div class="bd-badge">
+          <span class="bd-label" style="color:var(--err);">OVER</span>
+          <span style="color:var(--txt); font-weight:800;">${bd.over}</span>
+        </div>
       </div>
     `;
     widget.appendChild(rowDiv);
@@ -1872,32 +2028,32 @@ function renderSummaryReport() {
   container.appendChild(widget);
 
   // Overall Summary Widget
-  const total = rawData.length;
-  const shortage = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='shortage').length;
-  const overage  = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='overage').length;
+  const totalDefects = rawData.reduce((s, r) => s + Math.abs(parseFloat(r.quantity) || 0), 0);
+  const shortageDefects = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='shortage').reduce((s, r) => s + Math.abs(parseFloat(r.quantity) || 0), 0);
+  const overageDefects  = rawData.filter(r => String(r.symptoms||'').trim().toLowerCase()==='overage').reduce((s, r) => s + Math.abs(parseFloat(r.quantity) || 0), 0);
   const unreviewed = rawData.filter(r => (userData[r._id]?.comment||'').trim()==='').length;
 
   const summaryWidget = document.createElement('div');
   summaryWidget.className = 'chart-widget';
   
   const summaryItems = [
-    { label: 'Total', count: total, color: '#f97316' },
+    { label: 'Total', count: totalDefects, color: '#f97316' },
     { label: 'Unreviewed', count: unreviewed, color: '#f97316' },
-    { label: 'Shortage', count: shortage, color: '#3b7eff' },
-    { label: 'Overage', count: overage, color: '#ef4444' }
+    { label: 'Shortage', count: shortageDefects, color: '#3b7eff' },
+    { label: 'Overage', count: overageDefects, color: '#ef4444' }
   ];
 
-  let cardsHtml = `<div class="chart-widget-title" style="margin-bottom: 8px;">Overall Summary</div>
+  let cardsHtml = `<div class="chart-widget-title" style="margin-bottom: 20px;">Overall Summary</div>
                    <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
                      <div style="flex: 1; min-width: 250px;">
                        <div class="summary-cards-grid">`;
                    
   summaryItems.forEach(item => {
-    const pctVal = total > 0 ? (item.count / total) * 100 : 0;
+    const pctVal = totalDefects > 0 ? (item.count / totalDefects) * 100 : 0;
     const pctStr = pctVal.toFixed(1);
     
     cardsHtml += `
-      <div class="summary-card">
+      <div class="summary-card" style="--card-accent: ${item.color};">
         <div class="sc-title">${item.label}</div>
         <div class="sc-val" style="color: ${item.color};">${item.count}</div>
         <div class="sc-pct">(${pctStr}%)</div>
@@ -1912,9 +2068,10 @@ function renderSummaryReport() {
                      </div>
                    </div>`;
   summaryWidget.innerHTML = cardsHtml;
-  
-  // Insert before the root cause widget so it appears on the left/first
+
+  // Insert Overall Summary first
   container.insertBefore(summaryWidget, widget);
+  // widget (Defect Breakdown bars) stays after summary — already appended above
 
   setTimeout(() => {
     const ctx = document.getElementById('overallSummaryChart');
@@ -1958,19 +2115,21 @@ function renderSummaryReport() {
               g.addColorStop(1, stops[1]);
               return g;
             },
-            borderWidth: 0,
-            borderRadius: 1,
-            hoverOffset: 10
+            borderWidth: 3,
+            borderColor: 'transparent',
+            borderRadius: 4,
+            hoverOffset: 8,
+            spacing: 3
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '75%',
-          events: [],
-          animation: false,
+          cutout: '72%',
+          events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
+          animation: { duration: 800, easing: 'easeInOutQuart' },
           layout: {
-            padding: { top: 5, bottom: 5, left: 5, right: 5 }
+            padding: { top: 8, bottom: 8, left: 8, right: 8 }
           },
           plugins: {
             legend: {
@@ -1978,14 +2137,33 @@ function renderSummaryReport() {
               align: 'center',
               labels: { 
                 color: txtColor, 
-                font: { family: 'Inter', size: 11, weight: '500', lineHeight: 1.5 },
+                font: { family: 'Inter', size: 11, weight: '500' },
                 usePointStyle: true,
                 pointStyle: 'circle',
-                boxWidth: 7,
-                padding: 8
+                boxWidth: 8,
+                boxHeight: 8,
+                padding: 10
               }
             },
-            tooltip: { enabled: false }
+            tooltip: {
+              enabled: true,
+              backgroundColor: 'rgba(14,22,40,0.95)',
+              borderColor: 'rgba(59,126,255,0.3)',
+              borderWidth: 1,
+              titleColor: '#e2e8f0',
+              bodyColor: '#94a3b8',
+              padding: 10,
+              cornerRadius: 8,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  const val = context.parsed;
+                  const total = context.dataset.data.reduce((a,b) => a+b, 0);
+                  const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0.0';
+                  return ` ${val} defects (${pct}%)`;
+                }
+              }
+            }
           }
         },
         plugins: [{
@@ -1998,27 +2176,29 @@ function renderSummaryReport() {
             const x = meta.data[0].x;
             const y = meta.data[0].y;
             
-            ctx.restore();
+            ctx.save();
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
             const txtCol = getComputedStyle(document.documentElement).getPropertyValue('--txt').trim() || '#e2e8f0';
             const subCol = getComputedStyle(document.documentElement).getPropertyValue('--mut').trim() || '#64748b';
             
-            ctx.font = '800 32px Inter';
+            ctx.font = '800 30px Inter';
             ctx.fillStyle = txtCol;
-            ctx.fillText(totalErrors, x, y - 8);
+            ctx.fillText(totalErrors, x, y - 9);
             
-            ctx.font = '700 11px Inter';
+            ctx.font = '600 10px Inter';
             ctx.fillStyle = subCol;
-            ctx.fillText('TOTAL DEFECTS', x, y + 18);
-            ctx.save();
+            ctx.letterSpacing = '1px';
+            ctx.fillText('TOTAL DEFECTS', x, y + 14);
+            ctx.restore();
           }
         }]
       });
     }
   }, 100);
   
+
   // Top Users Widget
   const usersWidget = document.createElement('div');
   usersWidget.className = 'chart-widget chart-widget--full';
@@ -2030,6 +2210,7 @@ function renderSummaryReport() {
   sorted.forEach((item, index) => {
     const cat = item[0];
     const catTotal = item[1];
+    if (cat === 'SPX5') return;
     const usersMap = catUsers[cat] || {};
     const sortedUsers = Object.entries(usersMap).sort((a,b) => b[1] - a[1]);
     const topUsers = sortedUsers;
@@ -2052,7 +2233,7 @@ function renderSummaryReport() {
       
       html += `
         <div class="user-row">
-          <div class="user-name" title="${esc(uName)}" style="cursor:pointer;" onclick="openUserPopup('${esc(uName).replace(/'/g,"\\'")}', event)">${esc(uName)}</div>
+          <div class="user-name" title="${esc(uName)}" style="cursor:pointer;" data-uid="${esc(uName)}" data-cat="${esc(cat)}" onclick="openUserPopup(this.dataset.uid, this.dataset.cat, event)">${esc(uName)}</div>
           <div class="user-bar-container">
             <div class="user-bar" style="background: ${bg}; width: 0%;" data-target="${uPct}%"></div>
           </div>
@@ -2067,6 +2248,306 @@ function renderSummaryReport() {
   
   usersWidget.appendChild(usersGrid);
   container.appendChild(usersWidget);
+
+  // ── TREND CHART WIDGET ──────────────────────────────────────
+  const trendWidget = document.createElement('div');
+  trendWidget.className = 'chart-widget chart-widget--full';
+
+  // Build daily & hourly buckets from rawData
+  const dailyBuckets = {};
+  const hourlyBuckets = {};
+
+  rawData.forEach(row => {
+    const ts = row.timestamp || '';
+    if (!ts) return;
+    const d = new Date(ts);
+    if (isNaN(d)) return;
+    const qty = Math.abs(parseFloat(row.quantity) || 0);
+    const sym = String(row.symptoms || '').trim().toLowerCase();
+
+    // daily key: YYYY-MM-DD
+    const dayKey = d.toISOString().slice(0, 10);
+    if (!dailyBuckets[dayKey]) dailyBuckets[dayKey] = { total: 0, shortage: 0, overage: 0 };
+    dailyBuckets[dayKey].total    += qty;
+    if (sym === 'shortage') dailyBuckets[dayKey].shortage += qty;
+    if (sym === 'overage')  dailyBuckets[dayKey].overage  += qty;
+
+    // hourly key: YYYY-MM-DD HH
+    const hourKey = d.toISOString().slice(0, 13).replace('T', ' ') + ':00';
+    if (!hourlyBuckets[hourKey]) hourlyBuckets[hourKey] = { total: 0, shortage: 0, overage: 0 };
+    hourlyBuckets[hourKey].total    += qty;
+    if (sym === 'shortage') hourlyBuckets[hourKey].shortage += qty;
+    if (sym === 'overage')  hourlyBuckets[hourKey].overage  += qty;
+  });
+
+  // Sort keys
+  const dailyKeys  = Object.keys(dailyBuckets).sort();
+  const hourlyKeys = Object.keys(hourlyBuckets).sort();
+
+  // Stats helper
+  function getTrendStats(keys, buckets) {
+    const totals = keys.map(k => buckets[k].total);
+    const peak   = Math.max(...totals);
+    const peakKey = keys[totals.indexOf(peak)];
+    const avg    = totals.length ? (totals.reduce((a,b)=>a+b,0) / totals.length) : 0;
+    const last   = totals[totals.length - 1] || 0;
+    const prev   = totals[totals.length - 2] || 0;
+    const trend  = prev > 0 ? (((last - prev) / prev) * 100).toFixed(1) : null;
+    return { peak, peakKey, avg: avg.toFixed(1), trend };
+  }
+
+  let trendMode = 'hourly'; // 'daily' | 'hourly'
+  let trendChartInst = null;
+
+  function buildTrendChart() {
+    const keys    = trendMode === 'daily' ? dailyKeys  : hourlyKeys;
+    const buckets = trendMode === 'daily' ? dailyBuckets : hourlyBuckets;
+    const stats   = getTrendStats(keys, buckets);
+
+    // Format labels
+    const labels = keys.map(k => {
+      if (trendMode === 'daily') {
+        const [,m,d] = k.split('-');
+        const months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${parseInt(d)} ${months[parseInt(m)]}`;
+      } else {
+        return k.slice(11, 16); // HH:00
+      }
+    });
+
+    const dataTotal    = keys.map(k => buckets[k].total);
+    const dataShort    = keys.map(k => buckets[k].shortage);
+    const dataOver     = keys.map(k => buckets[k].overage);
+    const avgVal       = parseFloat(stats.avg);
+
+    const isLight  = document.documentElement.getAttribute('data-theme') === 'light';
+    const txtColor = isLight ? '#0f172a' : '#e2e8f0';
+    const mutColor = isLight ? '#475569' : '#64748b';
+    const brdColor = isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)';
+    const bgColor  = isLight ? '#f0f4f8' : '#0e1628';
+    const tooltipBg    = isLight ? 'rgba(255,255,255,0.97)' : 'rgba(8,13,26,0.95)';
+    const tooltipTitle = isLight ? '#0f172a' : '#e2e8f0';
+    const tooltipBody  = isLight ? '#475569' : '#94a3b8';
+    const tooltipBorder = isLight ? 'rgba(37,99,235,0.2)' : 'rgba(59,126,255,0.25)';
+
+    // Update stats row
+    const trendDiv = document.getElementById('trendStatsRow');
+    const trendDir = stats.trend !== null
+      ? (parseFloat(stats.trend) > 0
+          ? `<span style="color:#ef4444;">▲ ${Math.abs(stats.trend)}%</span>`
+          : `<span style="color:#10b981;">▼ ${Math.abs(stats.trend)}%</span>`)
+      : '<span style="color:var(--mut);">—</span>';
+
+    const peakLabel = trendMode === 'daily'
+      ? (() => { const [,m,d] = stats.peakKey.split('-'); const months=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${parseInt(d)} ${months[parseInt(m)]}`; })()
+      : stats.peakKey.slice(11,16);
+
+    trendDiv.innerHTML = `
+      <div class="trend-stat">
+        <div class="trend-stat-label">Peak ${trendMode === 'daily' ? 'Day' : 'Hour'}</div>
+        <div class="trend-stat-val" style="color:var(--warn);">${peakLabel} <span style="font-size:0.7rem;font-weight:600;color:var(--mut);">(${stats.peak})</span></div>
+      </div>
+      <div class="trend-stat">
+        <div class="trend-stat-label">Avg / ${trendMode === 'daily' ? 'Day' : 'Hour'}</div>
+        <div class="trend-stat-val" style="color:var(--pri);">${stats.avg}</div>
+      </div>
+      <div class="trend-stat">
+        <div class="trend-stat-label">vs Previous</div>
+        <div class="trend-stat-val">${trendDir}</div>
+      </div>
+      <div class="trend-stat">
+        <div class="trend-stat-label">Data Points</div>
+        <div class="trend-stat-val" style="color:var(--txt);">${keys.length}</div>
+      </div>
+    `;
+
+    // Destroy old chart
+    if (trendChartInst) { trendChartInst.destroy(); trendChartInst = null; }
+
+    const canvas = document.getElementById('trendLineCanvas');
+    if (!canvas || !window.Chart) return;
+    const ctx2 = canvas.getContext('2d');
+
+    // Gradient fill for total — lighter in light mode
+    const grad = ctx2.createLinearGradient(0, 0, 0, 220);
+    grad.addColorStop(0, isLight ? 'rgba(37,99,235,0.15)' : 'rgba(59,126,255,0.28)');
+    grad.addColorStop(1, 'rgba(167,139,250,0.0)');
+
+    const gradShort = ctx2.createLinearGradient(0, 0, 0, 220);
+    gradShort.addColorStop(0, isLight ? 'rgba(37,99,235,0.07)' : 'rgba(96,165,250,0.12)');
+    gradShort.addColorStop(1, 'rgba(59,126,255,0.0)');
+
+    const gradOver = ctx2.createLinearGradient(0, 0, 0, 220);
+    gradOver.addColorStop(0, isLight ? 'rgba(220,38,38,0.08)' : 'rgba(239,68,68,0.12)');
+    gradOver.addColorStop(1, 'rgba(249,115,22,0.0)');
+
+    trendChartInst = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Total Defects',
+            data: dataTotal,
+            borderColor: '#3b7eff',
+            backgroundColor: grad,
+            borderWidth: 3,
+            pointRadius: dataTotal.length > 30 ? 0 : 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#60a5fa',
+            pointBorderColor: bgColor,
+            pointBorderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            order: 1
+          },
+          {
+            label: 'Shortage',
+            data: dataShort,
+            borderColor: '#60a5fa',
+            backgroundColor: gradShort,
+            borderWidth: 2,
+            pointRadius: dataShort.length > 30 ? 0 : 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#60a5fa',
+            pointBorderColor: bgColor,
+            pointBorderWidth: 1.5,
+            tension: 0.4,
+            fill: true,
+            borderDash: [4, 3],
+            order: 2
+          },
+          {
+            label: 'Overage',
+            data: dataOver,
+            borderColor: '#ef4444',
+            backgroundColor: gradOver,
+            borderWidth: 2,
+            pointRadius: dataOver.length > 30 ? 0 : 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#ef4444',
+            pointBorderColor: bgColor,
+            pointBorderWidth: 1.5,
+            tension: 0.4,
+            fill: true,
+            borderDash: [4, 3],
+            order: 3
+          },
+          {
+            label: 'Average',
+            data: keys.map(() => avgVal),
+            borderColor: 'rgba(245,158,11,0.5)',
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            tension: 0,
+            fill: false,
+            order: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        animation: { duration: 600, easing: 'easeInOutQuart' },
+        layout: { padding: { top: 8, right: 8, bottom: 0, left: 0 } },
+        scales: {
+          x: {
+            grid: { color: brdColor, drawBorder: false },
+            ticks: {
+              color: mutColor,
+              font: { family: 'Inter', size: 10, weight: '500' },
+              maxTicksLimit: 14,
+              maxRotation: 0
+            },
+            border: { display: false }
+          },
+          y: {
+            grid: { color: brdColor, drawBorder: false },
+            ticks: {
+              color: mutColor,
+              font: { family: 'Inter', size: 10 },
+              padding: 6
+            },
+            border: { display: false },
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            align: 'end',
+            labels: {
+              color: txtColor,
+              font: { family: 'Inter', size: 10, weight: '600' },
+              usePointStyle: true,
+              pointStyle: 'circle',
+              boxWidth: 7,
+              boxHeight: 7,
+              padding: 14
+            }
+          },
+          tooltip: {
+            backgroundColor: tooltipBg,
+            borderColor: tooltipBorder,
+            borderWidth: 1,
+            titleColor: tooltipTitle,
+            bodyColor: tooltipBody,
+            padding: 12,
+            cornerRadius: 10,
+            callbacks: {
+              title: function(items) {
+                return trendMode === 'daily'
+                  ? 'Date: ' + keys[items[0].dataIndex]
+                  : 'Hour: ' + keys[items[0].dataIndex];
+              },
+              label: function(ctx3) {
+                const ds = ctx3.dataset.label;
+                const val = ctx3.parsed.y;
+                if (ds === 'Average') return null;
+                const tot = dataTotal[ctx3.dataIndex] || 1;
+                const pct = ds !== 'Total Defects' ? ` (${((val/tot)*100).toFixed(1)}%)` : '';
+                return ` ${ds}: ${val}${pct}`;
+              },
+              afterBody: function(items) {
+                return [''];
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Build widget HTML
+  trendWidget.innerHTML = `
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div class="chart-widget-title" style="margin-bottom:0;">Defects Trend</div>
+      <div class="trend-controls">
+        <button class="trend-toggle-btn" id="trendBtnDaily" onclick="switchTrend('daily')">Daily</button>
+        <button class="trend-toggle-btn active" id="trendBtnHourly" onclick="switchTrend('hourly')">Hourly</button>
+      </div>
+    </div>
+    <div class="trend-stats-row" id="trendStatsRow"></div>
+    <div style="position:relative; height:220px;">
+      <canvas id="trendLineCanvas"></canvas>
+    </div>
+  `;
+
+  container.appendChild(trendWidget);
+
+  window.switchTrend = function(mode) {
+    trendMode = mode;
+    document.getElementById('trendBtnDaily').classList.toggle('active', mode === 'daily');
+    document.getElementById('trendBtnHourly').classList.toggle('active', mode === 'hourly');
+    buildTrendChart();
+  };
+
+  setTimeout(buildTrendChart, 150);
+  // ────────────────────────────────────────────────────────────
+
+
   
   setTimeout(() => {
     const bars = container.querySelectorAll('.chart-bar, .user-bar');
@@ -2118,9 +2599,22 @@ function renderSummaryReport() {
 </style>
 
 <script>
-function openUserPopup(userId, event) {
+function openUserPopup(userId, cat, event) {
   event.stopPropagation();
-  const userRows = rawData.filter(r => String(r.user_id||'').trim() === userId);
+  const userRows = rawData.filter(r => {
+    const u = userData[r._id] || {};
+    let cmt = String(u.comment || '').trim().toUpperCase();
+    if (!cmt) cmt = 'UNCATEGORIZED';
+    let rowCat = cmt;
+    if (rowCat !== 'UNCATEGORIZED') {
+      rowCat = rowCat.replace(/^SHORT\s+/i, '').replace(/^OVER\s+/i, '').trim();
+      if (rowCat === 'OB PS') rowCat = 'OUTBOUND PS';
+      if (rowCat === 'IB PS') rowCat = 'INBOUND PS';
+    }
+    if (rowCat !== cat) return false;
+    if (cat === 'STOW') return String(r.user_id||'').trim() === userId;
+    return String(u.user||'').trim() === userId;
+  });
   if (!userRows.length) return;
 
   const shortCount = userRows.filter(r => String(r.symptoms||'').trim().toLowerCase() === 'shortage').length;
