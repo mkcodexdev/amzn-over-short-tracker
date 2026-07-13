@@ -6,55 +6,55 @@
 <title>Over &amp; Short Tracker — CAI6</title>
 <meta name="description" content="Track discrepancies, manage overages & shortages, and export reports — all in your browser. Amazon CAI6 Operations tool.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: rgba(245,158,11,.2); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,.4); }
+::-webkit-scrollbar-thumb { background: rgba(255,153,0,.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,153,0,.4); }
 
 :root {
-  --bg: #0a0f1e;
-  --s1: #0f172a;
-  --s2: #1e293b;
+  --bg: #080c12;
+  --s1: #0d1117;
+  --s2: #161b24;
   --brd: rgba(255,255,255,0.18);
-  --pri: #f59e0b;
-  --pri-rgb: 245,158,11;
-  --priG: rgba(245,158,11,.2);
+  --pri: #ff9900;
+  --pri-rgb: 255,153,0;
+  --priG: rgba(255,153,0,.2);
   --acc: #a78bfa;
   --txt: #f0f4ff;
   --mut: #94a3b8;
   --ok: #10d9a0;
   --warn: #f59e0b;
   --err: #f43f5e;
-  --cyan: #06b6d4;
-  --shortage: #06b6d4;
-  --overage: #f43f5e;
+  --cyan: #00b8f5;
+  --shortage: #00b8f5;
+  --overage: #f05c26;
   --r: 12px;
   --glass: #0f172a;
   --glass-border: rgba(255,255,255,0.18);
 }
 
 [data-theme="light"] {
-  --bg: #f8f9fc;
+  --bg: #f3f5f8;
   --s1: #ffffff;
-  --s2: #f1f3f9;
+  --s2: #eaecf0;
   --brd: rgba(0,0,0,0.08);
-  --pri: #d97706;
-  --pri-rgb: 217,119,6;
-  --priG: rgba(217,119,6,.1);
+  --pri: #e68a00;
+  --pri-rgb: 230,138,0;
+  --priG: rgba(230,138,0,.1);
   --acc: #7c3aed;
   --txt: #0f172a;
   --mut: #64748b;
   --ok: #059669;
   --warn: #d97706;
   --err: #e11d48;
-  --cyan: #0284c7;
-  --shortage: #0284c7;
-  --overage: #e11d48;
+  --cyan: #0369a1;
+  --shortage: #0369a1;
+  --overage: #c2410c;
   --glass: rgba(0,0,0,0.02);
   --glass-border: rgba(0,0,0,0.06);
 }
@@ -64,11 +64,22 @@ body {
   background-color: var(--bg);
   background-image: none;
   color: var(--txt); min-height: 111vh; transition: background-color .25s, color .25s; zoom: 90%; 
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(var(--pri-rgb),.06) 0%, transparent 70%),
+    linear-gradient(rgba(var(--pri-rgb),.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--pri-rgb),.018) 1px, transparent 1px);
+  background-size: 100% 100%, 56px 56px, 56px 56px;
 }
 [data-theme="light"] body {
   background-image: none;
 }
-html { background: #0a0f1e; }
+html { background: #080c12; }
+[data-theme="light"] html { background: #f3f5f8; }
 
 /* ── THEME TOGGLE ── */
 .theme-toggle { display: flex; align-items: center; gap: .5rem; background: var(--s2); border: 1px solid var(--brd); color: var(--mut); padding: .45rem .85rem; border-radius: 8px; font-size: .8rem; cursor: pointer; transition: all .2s; user-select: none; }
@@ -80,12 +91,16 @@ html { background: #0a0f1e; }
 [data-theme="light"] .toggle-thumb { transform: translateX(14px); }
 
 [data-theme="light"] thead th { background: #f8fafc; }
-[data-theme="light"] tbody tr:hover { background: rgba(217,119,6,.04); }
+[data-theme="light"] tbody tr:hover { background: rgba(230,138,0,.04); }
 /* Light mode KPI card backgrounds */
-[data-theme="light"] .kpi.c-blue   { background: linear-gradient(135deg, #ffffff 0%, #e8f7fc 100%); border: 1px solid rgba(6,182,212,.3); }
-[data-theme="light"] .kpi.c-red    { background: linear-gradient(135deg, #ffffff 0%, #fde8ee 100%); border: 1px solid rgba(244,63,94,.3); }
-[data-theme="light"] .kpi.c-green  { background: linear-gradient(135deg, #ffffff 0%, #e6f9f4 100%); border: 1px solid rgba(16,217,160,.3); }
-[data-theme="light"] .kpi.c-orange { background: linear-gradient(135deg, #ffffff 0%, #fef3e2 100%); border: 1px solid rgba(245,158,11,.3); }
+[data-theme="light"] .kpi.c-blue   { background: linear-gradient(180deg, rgba(8,145,178,.05), rgba(8,145,178,.05)), #ffffff; }
+[data-theme="light"] .kpi.c-red    { background: linear-gradient(180deg, rgba(225,29,72,.05), rgba(225,29,72,.05)), #ffffff; }
+[data-theme="light"] .kpi.c-green  { background: linear-gradient(180deg, rgba(5,150,105,.05), rgba(5,150,105,.05)), #ffffff; }
+[data-theme="light"] .kpi.c-orange { background: linear-gradient(180deg, rgba(217,119,6,.05), rgba(217,119,6,.05)), #ffffff; }
+[data-theme="light"] .kpi.c-blue   { border: 1px solid rgba(8,145,178,.4); }
+[data-theme="light"] .kpi.c-red    { border: 1px solid rgba(225,29,72,.4); }
+[data-theme="light"] .kpi.c-green  { border: 1px solid rgba(5,150,105,.4); }
+[data-theme="light"] .kpi.c-orange { border: 1px solid rgba(217,119,6,.4); }
 
 /* Light mode KPI icon backgrounds */
 [data-theme="light"] .c-blue   .kpi-icon { background: rgba(6,182,212,.15);  color: #0891b2; }
@@ -94,16 +109,16 @@ html { background: #0a0f1e; }
 [data-theme="light"] .c-orange .kpi-icon { background: rgba(245,158,11,.15);  color: #d97706; }
 
 /* Light mode KPI values */
-[data-theme="light"] .c-blue   .kpi-val { color: #0891b2; }
-[data-theme="light"] .c-green  .kpi-val { color: #059669; }
-[data-theme="light"] .c-red    .kpi-val { color: #e11d48; }
-[data-theme="light"] .c-orange .kpi-val { color: #d97706; }
+[data-theme="light"] .c-blue   .kpi-val { color: #0284c7; }
+[data-theme="light"] .c-green  .kpi-val { color: #047857; }
+[data-theme="light"] .c-red    .kpi-val { color: #db1249; }
+[data-theme="light"] .c-orange .kpi-val { color: #c2660a; }
 
 /* Light mode KPI hover */
-[data-theme="light"] .kpi.c-blue:hover   { box-shadow: 0 12px 36px rgba(6,182,212,.15), 0 0 0 1px rgba(6,182,212,.3); border-color: rgba(6,182,212,.5); }
-[data-theme="light"] .kpi.c-red:hover    { box-shadow: 0 12px 36px rgba(244,63,94,.15), 0 0 0 1px rgba(244,63,94,.3); border-color: rgba(244,63,94,.5); }
-[data-theme="light"] .kpi.c-green:hover  { box-shadow: 0 12px 36px rgba(16,217,160,.15), 0 0 0 1px rgba(16,217,160,.3); border-color: rgba(16,217,160,.5); }
-[data-theme="light"] .kpi.c-orange:hover { box-shadow: 0 12px 36px rgba(245,158,11,.15), 0 0 0 1px rgba(245,158,11,.3); border-color: rgba(245,158,11,.5); }
+[data-theme="light"] .kpi.c-blue:hover   { box-shadow: 0 12px 36px rgba(0,0,0,.12), 0 0 0 1px rgba(8,145,178,.3); border-color: rgba(8,145,178,.7); }
+[data-theme="light"] .kpi.c-red:hover    { box-shadow: 0 12px 36px rgba(0,0,0,.12), 0 0 0 1px rgba(225,29,72,.3); border-color: rgba(225,29,72,.7); }
+[data-theme="light"] .kpi.c-green:hover  { box-shadow: 0 12px 36px rgba(0,0,0,.12), 0 0 0 1px rgba(5,150,105,.3); border-color: rgba(5,150,105,.7); }
+[data-theme="light"] .kpi.c-orange:hover { box-shadow: 0 12px 36px rgba(0,0,0,.12), 0 0 0 1px rgba(217,119,6,.3); border-color: rgba(217,119,6,.7); }
 
 [data-theme="light"] .t-card { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 12px rgba(0,0,0,.07); }
 [data-theme="light"] thead th { background: #f8fafc; border-bottom: 1px solid rgba(0,0,0,0.08); }
@@ -119,7 +134,7 @@ html { background: #0a0f1e; }
 /* ── UPLOAD SCREEN ── */
 #uploadScreen {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-height: 100vh; position: relative; overflow: hidden;
+  min-height: 100vh; position: relative; overflow: hidden; z-index: 1;
   background: var(--bg);
 }
 
@@ -135,12 +150,12 @@ html { background: #0a0f1e; }
 .ul-header-left { display: flex; align-items: center; gap: .8rem; }
 .ul-header-logo {
   width: 28px; height: 28px;
-  background: rgba(245,158,11,.1);
+  background: rgba(255,153,0,.1);
   border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.ul-header-logo .material-icons-round { font-size: 1rem; color: #f59e0b; }
+.ul-header-logo .material-icons-round { font-size: 1rem; color: #ff9900; }
 .ul-header-title {
   font-size: 1.05rem;
   font-weight: 800;
@@ -152,10 +167,10 @@ html { background: #0a0f1e; }
 .ul-sqm-logo { display: flex; align-items: center; gap: .7rem; }
 .ul-sqm-icon {
   width: 36px; height: 36px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: linear-gradient(135deg, #ff9900, #e68a00);
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 10px rgba(245,158,11,.3);
+  box-shadow: 0 2px 10px rgba(255,153,0,.3);
   flex-shrink: 0;
 }
 .ul-sqm-icon .material-icons-round { font-size: 1.1rem; color: #fff; }
@@ -176,8 +191,8 @@ html { background: #0a0f1e; }
   z-index: 1; margin-top: 2rem;
 }
 
-.upload-brand-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(245,158,11,.15); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; }
-.upload-brand-icon .material-icons-round { font-size: 1.5rem; color: #f59e0b; }
+.upload-brand-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,153,0,.15); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; }
+.upload-brand-icon .material-icons-round { font-size: 1.5rem; color: #ff9900; }
 
 .upload-container h1 {
   font-size: 1.8rem;
@@ -207,7 +222,7 @@ html { background: #0a0f1e; }
 
 .drop-zone { cursor: pointer; width: 100%; max-width: 440px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 14px; padding: 2.5rem 1.5rem; transition: all .25s cubic-bezier(.34,1.56,.64,1); background: rgba(255,255,255,.02); text-align: center; backdrop-filter: blur(8px); }
 .drop-zone:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,.02); }
-.drop-zone.over { border-color: #f59e0b; background: rgba(245,158,11,.05); }
+.drop-zone.over { border-color: #ff9900; background: rgba(255,153,0,.05); }
 [data-theme="light"] .drop-zone { border-color: rgba(0,0,0,0.15); }
 [data-theme="light"] .drop-zone:hover { border-color: rgba(0,0,0,0.3); background: rgba(0,0,0,.02); }
 
@@ -223,8 +238,8 @@ html { background: #0a0f1e; }
 .fmt-pill { background: rgba(255,255,255,0.08); color: var(--mut); border-radius: 4px; padding: .2rem .5rem; font-size: .65rem; font-weight: 600; letter-spacing: .05em; }
 [data-theme="light"] .fmt-pill { background: rgba(0,0,0,0.08); }
 
-.ul-btn-new { display: inline-flex; align-items: center; gap: .5rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; padding: .65rem 2rem; border-radius: 8px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .25s cubic-bezier(.34,1.56,.64,1); }
-.ul-btn-new:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 24px rgba(245,158,11,.25); animation: none; }
+.ul-btn-new { display: inline-flex; align-items: center; gap: .5rem; background: linear-gradient(135deg, #ff9900, #e68a00); color: #fff; border: none; padding: .65rem 2rem; border-radius: 8px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .25s cubic-bezier(.34,1.56,.64,1); }
+.ul-btn-new:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 24px rgba(255,153,0,.25); animation: none; }
 .ul-btn-new .material-icons-round { font-size: 1.1rem; }
 
 .upload-footer-text { margin-top: 1.5rem; font-size: .75rem; color: var(--mut); }
@@ -280,7 +295,7 @@ html { background: #0a0f1e; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── DASHBOARD ── */
-#dashboard { display: none; }
+#dashboard { display: none; position: relative; z-index: 1; }
 
 /* ── TOPBAR ── */
 .topbar {
@@ -293,6 +308,12 @@ html { background: #0a0f1e; }
   box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,.4);
   isolation: isolate;
 }
+.topbar::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 1px;
+  background: var(--pri);
+  opacity: .65;
+}
 [data-theme="light"] .topbar {
   background: rgba(248,249,252,0.90);
   border-bottom: 1px solid var(--brd);
@@ -301,10 +322,10 @@ html { background: #0a0f1e; }
 .tb-left { display: flex; align-items: center; gap: .65rem; }
 .tb-logo {
   width: 34px; height: 34px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: linear-gradient(135deg, #ff9900, #e68a00);
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 10px rgba(245,158,11,.35);
+  box-shadow: 0 2px 10px rgba(255,153,0,.35);
 }
 .tb-logo .material-icons-round { font-size: 1.15rem; color: #fff; }
 .tb-title {
@@ -343,8 +364,8 @@ html { background: #0a0f1e; }
   cursor: pointer; transition: all .2s cubic-bezier(.34,1.56,.64,1); white-space: nowrap;
 }
 [data-theme="light"] .icon-btn { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); }
-.icon-btn:hover { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.35); color: var(--pri); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245,158,11,.12); }
-.icon-btn:active { transform: translateY(0); box-shadow: none; }
+.icon-btn:hover { background: rgba(255,153,0,0.1); border-color: rgba(255,153,0,0.35); color: var(--pri); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,153,0,.12); }
+.icon-btn:active { transform: scale(.96); box-shadow: none; }
 .icon-btn .material-icons-round { font-size: .92rem; }
 
 /* Icon-ONLY square button (undo/redo, theme) */
@@ -357,17 +378,17 @@ html { background: #0a0f1e; }
   opacity: 1;
 }
 [data-theme="light"] .icon-btn-sq { background: transparent; border-color: transparent; }
-.icon-btn-sq:hover { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); color: var(--pri); transform: translateY(-1px); }
-.icon-btn-sq:active { transform: translateY(0); }
+.icon-btn-sq:hover { background: rgba(255,153,0,0.1); border-color: rgba(255,153,0,0.2); color: var(--pri); transform: translateY(-1px); }
+.icon-btn-sq:active { transform: scale(.94); }
 .icon-btn-sq .material-icons-round { font-size: .95rem; }
 .icon-btn-sq.active {
   opacity: 1;
   color: var(--pri);
-  border-color: rgba(245,158,11,.35);
-  background: rgba(245,158,11,.1);
+  border-color: rgba(255,153,0,.35);
+  background: rgba(255,153,0,.1);
 }
 .icon-btn-sq.active:hover {
-  background: rgba(245,158,11,.2);
+  background: rgba(255,153,0,.2);
   border-color: var(--pri);
   transform: translateY(-1px);
 }
@@ -379,6 +400,7 @@ html { background: #0a0f1e; }
   font-weight: 600; box-shadow: 0 2px 12px rgba(16,185,129,.2);
 }
 .btn-export:hover { background: linear-gradient(135deg, #0d9e6e, #047857); color: #fff; border-color: rgba(16,185,129,.6); box-shadow: 0 4px 20px rgba(16,185,129,.3); }
+.btn-export:active { transform: scale(.96); background: linear-gradient(135deg, #0a8a63, #036650); box-shadow: 0 2px 8px rgba(16,185,129,.25); }
 
 /* Append button */
 .btn-append {
@@ -388,6 +410,7 @@ html { background: #0a0f1e; }
 }
 [data-theme="light"] .btn-append { color: var(--warn); border-color: rgba(217,119,6,.3); background: rgba(217,119,6,.06); }
 .btn-append:hover { background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.5); color: var(--warn); box-shadow: 0 4px 16px rgba(245,158,11,.12); transform: translateY(-2px); }
+.btn-append:active { transform: scale(.96); background: rgba(245,158,11,.25); border-color: rgba(245,158,11,.65); box-shadow: none; }
 
 /* Reset button */
 .btn-reset {
@@ -395,6 +418,7 @@ html { background: #0a0f1e; }
 }
 [data-theme="light"] .btn-reset { color: var(--err); border-color: rgba(220,38,38,.4); background: rgba(220,38,38,.1); }
 .btn-reset:hover { background: rgba(239,68,68,.15) !important; border-color: var(--err) !important; color: var(--err) !important; }
+.btn-reset:active { transform: scale(.96); background: rgba(239,68,68,.28) !important; box-shadow: none !important; }
 
 /* Theme toggle compact */
 .theme-toggle {
@@ -417,7 +441,7 @@ html { background: #0a0f1e; }
   background: var(--s2); border-color: var(--brd); color: var(--mut);
 }
 [data-theme="light"] .icon-btn:hover {
-  background: rgba(217,119,6,.07); border-color: rgba(217,119,6,.35); color: var(--pri);
+  background: rgba(230,138,0,.07); border-color: rgba(230,138,0,.35); color: var(--pri);
 }
 [data-theme="light"] .meta-pill {
   background: transparent; border: none; color: var(--mut);
@@ -445,11 +469,11 @@ html { background: #0a0f1e; }
   background: var(--pri);
   border-radius: 99px;
   transition: width .8s cubic-bezier(.4,0,.2,1);
-  box-shadow: 0 0 8px rgba(245,158,11,.4);
+  box-shadow: 0 0 8px rgba(255,153,0,.4);
 }
 .tb-progress-pct {
   font-size: .75rem; font-weight: 700;
-  color: #f59e0b; min-width: 36px; text-align: right;
+  color: #ff9900; min-width: 36px; text-align: right;
   font-variant-numeric: tabular-nums; letter-spacing: -.01em;
 }
 
@@ -475,17 +499,23 @@ html { background: #0a0f1e; }
 [data-theme="light"] .tb-clock { color: var(--txt); }
 [data-theme="light"] .tb-date { color: var(--mut); }
 
-/* KPI ROW */
-.kpi-row { padding: .85rem 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: .75rem; }
+/* KPI ROW — card design ported from Weekly Performance Tracker */
+.kpi-row { padding: .85rem 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; }
 .kpi {
-  border-radius: 14px; padding: .95rem 1.15rem;
+  border-radius: 12px; padding: .75rem .9rem;
   position: relative; overflow: hidden;
-  display: flex; flex-direction: row; align-items: center; gap: .85rem;
+  display: flex; flex-direction: row; align-items: center; gap: .7rem;
   background: var(--s1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, border-color .25s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.03);
+  transition: transform .18s cubic-bezier(.4,0,.2,1), box-shadow .18s ease, border-color .18s ease;
   animation: kpiFadeIn .4s ease both;
+}
+.kpi::after {
+  content: '';
+  position: absolute; bottom: -30px; right: -30px;
+  width: 90px; height: 90px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--pri-rgb),.06) 0%, transparent 70%);
+  pointer-events: none;
 }
 @keyframes kpiFadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -495,55 +525,60 @@ html { background: #0a0f1e; }
 .kpi-row .kpi:nth-child(3) { animation-delay: .12s; }
 .kpi-row .kpi:nth-child(4) { animation-delay: .18s; }
 .kpi-row .kpi:nth-child(5) { animation-delay: .24s; }
-.kpi.c-blue   { border: 1px solid rgba(6,182,212,.45); background: linear-gradient(135deg, #0f172a 0%, #0c2540 100%); }
-.kpi.c-red    { border: 1px solid rgba(244,63,94,.45); background: linear-gradient(135deg, #0f172a 0%, #2a0e1a 100%); }
-.kpi.c-green  { border: 1px solid rgba(16,217,160,.45); background: linear-gradient(135deg, #0f172a 0%, #0a2420 100%); }
-.kpi.c-orange { border: 1px solid rgba(245,158,11,.45); background: linear-gradient(135deg, #0f172a 0%, #281c06 100%); }
+.kpi.c-blue   { background: linear-gradient(180deg, rgba(6,182,212,.06), rgba(6,182,212,.06)), var(--s1); }
+.kpi.c-red    { background: linear-gradient(180deg, rgba(244,63,94,.06), rgba(244,63,94,.06)), var(--s1); }
+.kpi.c-green  { background: linear-gradient(180deg, rgba(16,217,160,.06), rgba(16,217,160,.06)), var(--s1); }
+.kpi.c-orange { background: linear-gradient(180deg, rgba(245,158,11,.06), rgba(245,158,11,.06)), var(--s1); }
+.kpi.c-blue   { border: 1px solid rgba(6,182,212,.35); }
+.kpi.c-red    { border: 1px solid rgba(244,63,94,.35); }
+.kpi.c-green  { border: 1px solid rgba(16,217,160,.35); }
+.kpi.c-orange { border: 1px solid rgba(245,158,11,.35); }
 
-.kpi::before { display: none; }
-.kpi::after  { display: none; }
+.kpi:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.6), 0 0 24px rgba(var(--pri-rgb),.08); z-index: 2; }
+.kpi.c-blue:hover   { border-color: rgba(6,182,212,.65); }
+.kpi.c-red:hover    { border-color: rgba(244,63,94,.65); }
+.kpi.c-green:hover  { border-color: rgba(16,217,160,.65); }
+.kpi.c-orange:hover { border-color: rgba(245,158,11,.65); }
 
-.kpi:hover { transform: translateY(-4px); }
-.kpi.c-blue:hover   { border-color: rgba(6,182,212,.7); }
-.kpi.c-red:hover    { border-color: rgba(244,63,94,.7); }
-.kpi.c-green:hover  { border-color: rgba(16,217,160,.7); }
-.kpi.c-orange:hover { border-color: rgba(245,158,11,.7); }
+/* Icons — beside the text, sharing the row so the card stays compact */
+.kpi-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 0; }
+.kpi-icon .material-icons-round { font-size: 1.15rem; }
+.c-blue   .kpi-icon { background: rgba(6,182,212,.15);  color: #22d3ee; }
+.c-red    .kpi-icon { background: rgba(244,63,94,.15);   color: #fb7185; }
+.c-green  .kpi-icon { background: rgba(16,217,160,.15);  color: #10d9a0; }
+.c-orange .kpi-icon { background: rgba(245,158,11,.15);  color: #fbbf24; }
 
-/* Icons */
-.kpi-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.kpi-icon .material-icons-round { font-size: 1.1rem; }
-.c-blue   .kpi-icon { background: rgba(6,182,212,.2);  color: #22d3ee; }
-.c-red    .kpi-icon { background: rgba(244,63,94,.2);   color: #fb7185; }
-.c-green  .kpi-icon { background: rgba(16,217,160,.2);  color: #10d9a0; }
-.c-orange .kpi-icon { background: rgba(245,158,11,.2);  color: #fbbf24; }
-
-.kpi-text { display: flex; flex-direction: column; gap: .05rem; min-width: 0; }
-.kpi-label { font-size: .58rem; text-transform: uppercase; letter-spacing: .1em; color: var(--mut); font-weight: 700; }
-.kpi-val { font-size: 1.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
-.c-blue   .kpi-val { color: #22d3ee; }
-.c-green  .kpi-val { color: #10d9a0; }
-.c-red    .kpi-val { color: #fb7185; }
-.c-orange .kpi-val { color: #fbbf24; }
+.kpi-text { display: flex; flex-direction: column; justify-content: center; gap: .18rem; min-width: 0; flex: 1; }
+.kpi-label { font-size: .58rem; text-transform: uppercase; letter-spacing: .1em; color: var(--mut); font-weight: 700; margin-bottom: 0; }
+.kpi-val { font-size: 1.5rem; font-weight: 700; line-height: 1.05; letter-spacing: -.02em; font-family: 'Courier Prime', monospace; margin-bottom: 0; }
+.chart-count, .bc-tc-value, .tb-progress-pct { font-family: 'Courier Prime', monospace; }
+.c-blue   .kpi-val { color: #2ee6ff; text-shadow: 0 0 24px rgba(6,182,212,.35); }
+.c-green  .kpi-val { color: #0dffb0; text-shadow: 0 0 24px rgba(16,217,160,.35); }
+.c-red    .kpi-val { color: #ff5577; text-shadow: 0 0 24px rgba(244,63,94,.35); }
+.c-orange .kpi-val { color: #ffc42e; text-shadow: 0 0 24px rgba(245,158,11,.35); }
 .chip-badge { color: var(--pri); font-weight: 700; margin-left: 4px; font-size: .72rem; }
 .kpi { cursor: pointer; }
 .kpi:not([data-filter]) { cursor: default; }
-.kpi.active { transform: translateY(-4px); }
-.kpi.c-blue.active   { border-color: rgba(6,182,212,.9); }
-.kpi.c-red.active    { border-color: rgba(244,63,94,.9); }
-.kpi.c-green.active  { border-color: rgba(16,217,160,.9); }
-.kpi.c-orange.active { border-color: rgba(245,158,11,.9); }
-.kpi-sub { font-size: .63rem; color: var(--mut); opacity: .85; }
+.kpi.active { transform: translateY(-3px); }
+.kpi.c-blue.active   { border-color: rgba(6,182,212,.85); }
+.kpi.c-red.active    { border-color: rgba(244,63,94,.85); }
+.kpi.c-green.active  { border-color: rgba(16,217,160,.85); }
+.kpi.c-orange.active { border-color: rgba(245,158,11,.85); }
+.kpi-sub {
+  font-size: .62rem; font-weight: 600;
+  color: var(--mut); opacity: .85; letter-spacing: .01em;
+}
 
 /* CONTROLS */
 .ctrls { padding: 0 2rem 1rem; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
 .search-box { position: relative; min-width: 220px; max-width: 360px; flex: 1; }
 .search-box .material-icons-round { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--mut); font-size: 1rem; pointer-events: none; }
 .s-input { width: 100%; background: var(--s1); border: 1px solid var(--glass-border); color: var(--txt); padding: .6rem 1rem .6rem 2.5rem; border-radius: 8px; font-size: .85rem; outline: none; transition: all .2s; }
-.s-input:focus { border-color: rgba(245,158,11,.5); box-shadow: 0 0 0 3px rgba(245,158,11,.08); background: rgba(245,158,11,.03); }
+.s-input:focus { border-color: rgba(255,153,0,.5); box-shadow: 0 0 0 3px rgba(255,153,0,.08); background: rgba(255,153,0,.03); }
 .chip-bar { display: flex; gap: .4rem; flex-wrap: wrap; }
 .chip { background: var(--s2); border: 1px solid var(--glass-border); border-radius: 8px; padding: .35rem .8rem; font-size: .75rem; cursor: pointer; transition: all .18s; color: var(--mut); white-space: nowrap; }
 .chip:hover { border-color: var(--mut); }
-.chip.on { background: var(--priG); border-color: rgba(245,158,11,.5); color: var(--pri); box-shadow: 0 0 12px rgba(245,158,11,.15); }
+.chip.on { background: var(--priG); border-color: rgba(255,153,0,.5); color: var(--pri); box-shadow: 0 0 12px rgba(255,153,0,.15); }
 .rec-count { margin-left: auto; font-size: .78rem; color: var(--mut); }
 
 /* TABLE */
@@ -555,7 +590,7 @@ thead th { background: var(--s2); position: sticky; top: 0; z-index: 20; padding
 .sortable:hover { color: var(--txt); }
 .si { font-size: 14px; vertical-align: middle; margin-left: 4px; opacity: 0.5; }
 tbody tr { border-bottom: 1px solid rgba(42,63,99,.5); transition: background .12s; position: relative; }
-tbody tr { transition: background .15s ease; } tbody tr:nth-child(even) { background: rgba(255,255,255,.025); } tbody tr:hover { background: linear-gradient(90deg, rgba(245,158,11,.08) 0%, rgba(245,158,11,.03) 100%) !important; }
+tbody tr { transition: background .15s ease; } tbody tr:nth-child(even) { background: rgba(255,255,255,.025); } tbody tr:hover { background: linear-gradient(90deg, rgba(255,153,0,.08) 0%, rgba(255,153,0,.03) 100%) !important; }
 tbody tr:focus-within { z-index: 9999; }
 tbody td { padding: .75rem 1rem; vertical-align: middle; white-space: nowrap; }
 
@@ -919,7 +954,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 .insight-item:last-child { margin-bottom: 0; }
 .insight-item.good   { background: rgba(16,217,160,.08); color: var(--ok);  border-left-color: var(--ok); }
 .insight-item.bad    { background: rgba(244,63,94,.08); color: var(--err); border-left-color: var(--err); }
-.insight-item.action { background: rgba(245,158,11,.08); color: var(--pri); border-left-color: var(--pri); }
+.insight-item.action { background: rgba(255,153,0,.08); color: var(--pri); border-left-color: var(--pri); }
 .insight-item b { color: var(--txt); }
 
 /* ── THRESHOLD CALCULATOR ── */
@@ -980,8 +1015,8 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 [data-theme="light"] .trend-toggle-btn { background: var(--s1); }
 .trend-toggle-btn:hover { border-color: var(--pri); color: var(--pri); }
 .trend-toggle-btn.active {
-  background: rgba(245,158,11,0.12);
-  border-color: rgba(245,158,11,0.4);
+  background: rgba(255,153,0,0.12);
+  border-color: rgba(255,153,0,0.4);
   color: var(--pri);
 }
 .trend-stats-row {
@@ -1088,10 +1123,12 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 @media (max-width: 1100px) { .bc-grid-2 { grid-template-columns: 1fr; } }
 
 .bc-donut-wrap { display: flex; align-items: stretch; justify-content: center; gap: 1.5rem; flex-wrap: wrap; flex: 1; min-height: 0; }
-.bc-donut-canvas-wrap { position: relative; width: 190px; height: 190px; flex-shrink: 0; align-self: center; }
-.bc-donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-.bc-donut-center .bc-dc-val { font-size: 1.4rem; font-weight: 800; color: var(--txt); }
-.bc-donut-center .bc-dc-lbl { font-size: .65rem; color: var(--mut); }
+.bc-donut-canvas-wrap { display: grid; width: 190px; height: 190px; flex-shrink: 0; align-self: center; justify-items: center; align-items: center; }
+.bc-donut-canvas-wrap > * { grid-area: 1 / 1; }
+.bc-donut-canvas-wrap canvas { display: block; width: 100% !important; height: 100% !important; margin: 0; padding: 0; }
+.bc-donut-center { display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; margin: 0; padding: 0; z-index: 10; width: 100%; height: 100%; line-height: 1; text-align: center; }
+.bc-donut-center .bc-dc-val { font-size: 1.4rem; font-weight: 800; color: var(--txt); line-height: 1; margin-bottom: 2px; }
+.bc-donut-center .bc-dc-lbl { font-size: .65rem; color: var(--mut); line-height: 1; }
 .bc-legend { display: flex; flex-direction: column; justify-content: center; gap: 6px; height: 100%; max-height: 320px; overflow-y: auto; font-size: .72rem; min-width: 180px; padding-right: 4px; }
 .bc-legend-item { display: flex; align-items: center; gap: 6px; color: var(--txt); }
 .bc-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
@@ -1157,11 +1194,11 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 
 /* ── SCAN OOS SCOPED COLORS (amber/gold theme) ── */
 #section-scanoos {
-  --soos-pri:     #f59e0b;
-  --soos-pri-rgb: 245,158,11;
-  --soos-priG:    rgba(245,158,11,.18);
+  --soos-pri:     #ff9900;
+  --soos-pri-rgb: 255,153,0;
+  --soos-priG:    rgba(255,153,0,.18);
   --soos-acc:     #10b981;
-  --soos-bar:     #f59e0b;
+  --soos-bar:     #ff9900;
 }
 
 #section-scanoos .bc-tab.active            { color: var(--soos-pri); border-bottom-color: var(--soos-pri); }
@@ -1169,45 +1206,45 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 #section-scanoos .chart-widget-title::before { background: var(--soos-pri); }
 #section-scanoos .bc-up-icon              { color: var(--soos-pri) !important; opacity:.85; }
 #section-scanoos .bc-upload-zone:hover,
-#section-scanoos .bc-upload-zone.dragover { border-color: var(--soos-pri) !important; background: rgba(245,158,11,.04) !important; }
-#section-scanoos .bc-fmt-pills span       { border-color: rgba(245,158,11,.4); color: var(--soos-pri); }
+#section-scanoos .bc-upload-zone.dragover { border-color: var(--soos-pri) !important; background: rgba(255,153,0,.04) !important; }
+#section-scanoos .bc-fmt-pills span       { border-color: rgba(255,153,0,.4); color: var(--soos-pri); }
 
 /* KPI cards accent line */
 #section-scanoos .kpi-card::before        { background: var(--soos-pri); }
 
 /* Top bar / header tab underline */
-#section-scanoos .bc-tabs                 { border-bottom-color: rgba(245,158,11,.2); }
+#section-scanoos .bc-tabs                 { border-bottom-color: rgba(255,153,0,.2); }
 
 /* Chart bars (bcDrawBar) */
 /* Chart bars color handled inline by bcDrawBar */
 
 /* Table header accent */
-#section-scanoos table thead th           { border-bottom: 2px solid rgba(245,158,11,.3); color: var(--soos-pri); }
+#section-scanoos table thead th           { border-bottom: 2px solid rgba(255,153,0,.3); color: var(--soos-pri); }
 
 /* Scrollbar */
-#section-scanoos ::-webkit-scrollbar-thumb { background: rgba(245,158,11,.25); }
-#section-scanoos ::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,.45); }
+#section-scanoos ::-webkit-scrollbar-thumb { background: rgba(255,153,0,.25); }
+#section-scanoos ::-webkit-scrollbar-thumb:hover { background: rgba(255,153,0,.45); }
 
 /* Search input focus */
-#section-scanoos input[type="text"]:focus { border-color: var(--soos-pri) !important; box-shadow: 0 0 0 2px rgba(245,158,11,.15); }
+#section-scanoos input[type="text"]:focus { border-color: var(--soos-pri) !important; box-shadow: 0 0 0 2px rgba(255,153,0,.15); }
 
 /* Root cause / corrective box accent */
 #section-scanoos .bc-hl-box[style*="--pri"] { border-left-color: var(--soos-pri) !important; }
 #section-scanoos .bc-hl-box li strong     { color: var(--soos-pri); }
 
 /* Widget hover glow */
-#section-scanoos .chart-widget:hover      { border-color: rgba(245,158,11,.35) !important; box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07); }
+#section-scanoos .chart-widget:hover      { border-color: rgba(255,153,0,.35) !important; box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07); }
 
 /* Donut chart center value */
 /* Donut chart center value — inherits default var(--txt) */
 
 /* Separator line in merged donut widget */
-#section-scanoos [style*="background:var(--brd)"] { background: rgba(245,158,11,.2) !important; }
+#section-scanoos [style*="background:var(--brd)"] { background: rgba(255,153,0,.2) !important; }
 
 [data-theme="light"] #section-scanoos {
-  --soos-pri:     #d97706;
-  --soos-pri-rgb: 217,119,6;
-  --soos-priG:    rgba(217,119,6,.1);
+  --soos-pri:     #e68a00;
+  --soos-pri-rgb: 230,138,0;
+  --soos-priG:    rgba(230,138,0,.1);
 }
 
 </style>
@@ -1271,7 +1308,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
     </div>
     <div style="display:flex; align-items:center; gap:.75rem;">
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="border-radius:20px; padding: .35rem .75rem; gap: .5rem; font-weight:600; font-size: .75rem;">
-        <span class="material-icons-round" id="ulThemeIcon" style="color:#f59e0b; font-size: 1rem;">light_mode</span>
+        <span class="material-icons-round" id="ulThemeIcon" style="color:#ff9900; font-size: 1rem;">light_mode</span>
         <span id="themeToggleText">Light</span>
       </button>
     </div>
@@ -1279,7 +1316,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 
   <div class="upload-container">
 
-    <h1>Stow Quality <em style="color:#f59e0b;font-style:normal;">Metrics</em></h1>
+    <h1>Stow Quality <em style="color:#ff9900;font-style:normal;">Metrics</em></h1>
     <p class="upload-subtitle">Track defects, compliance &amp; associate performance across your FC</p>
 
     <div class="upload-divider-line"></div>
@@ -1392,6 +1429,10 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
       </button>
       <button class="icon-btn-sq" id="btnRedo" onclick="redo()" title="Redo (Ctrl+Y)">
         <span class="material-icons-round">redo</span>
+      </button>
+      <button class="icon-btn-sq" id="btnReviewDupes" onclick="openDuplicatesPopup()" title="Review Duplicates" style="position:relative;">
+        <span class="material-icons-round">content_copy</span>
+        <span id="dupeBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--err);color:#fff;font-size:.6rem;font-weight:800;border-radius:10px;min-width:16px;height:16px;align-items:center;justify-content:center;padding:0 3px;"></span>
       </button>
 
       <div class="tb-divider"></div>
@@ -1758,7 +1799,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
               <div class="bc-donut-wrap" style="flex:none; gap:1rem;">
                 <div class="bc-donut-canvas-wrap" style="width:140px;height:140px;">
                   <canvas id="soosDonutCanvas"></canvas>
-                  <div class="bc-donut-center" style="transform:scale(0.85);"><div class="bc-dc-val" id="soosDonutVal">0</div><div class="bc-dc-lbl">Defects</div></div>
+                  <div class="bc-donut-center" style="transform: scale(0.85);"><div class="bc-dc-val" id="soosDonutVal">0</div><div class="bc-dc-lbl">Defects</div></div>
                 </div>
                 <div class="bc-legend" id="soosLegend" style="font-size:0.8rem; margin-top:0;"></div>
               </div>
@@ -1771,7 +1812,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
               <div class="bc-donut-wrap" style="flex:none; gap:1rem;">
                 <div class="bc-donut-canvas-wrap" style="width:140px;height:140px;">
                   <canvas id="soosTenureCanvas"></canvas>
-                  <div class="bc-donut-center" style="transform:scale(0.85);"><div class="bc-dc-val" id="soosTenureVal">0</div><div class="bc-dc-lbl">Defects</div></div>
+                  <div class="bc-donut-center" style="transform: scale(0.85);"><div class="bc-dc-val" id="soosTenureVal">0</div><div class="bc-dc-lbl">Defects</div></div>
                 </div>
                 <div class="bc-legend" id="soosTenureLegend" style="font-size:0.8rem; margin-top:0;"></div>
               </div>
@@ -1851,6 +1892,77 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 // =====================================================
 
 const KEEP_COLS = ['user_id', 'container', 'asin', 'symptoms', 'quantity', 'timestamp'];
+
+// Normalizes any date/time value before comparing, so the same row isn't
+// treated as "new" just because a different file wrote the timestamp
+// slightly differently (text vs Date, with/without seconds, etc.)
+function normalizeTs(v) {
+  if (!v) return '';
+  const d = new Date(v);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 19);
+  return String(v).trim().toLowerCase();
+}
+
+// Unified key for any row: handles the timestamp column specially to avoid
+// mismatches caused by different time formats across files
+const rowKey = r => KEEP_COLS.map(col =>
+  col === 'timestamp' ? normalizeTs(r[col]) : String(r[col] ?? '').trim().toLowerCase()
+).join('|');
+
+// Collapses duplicate rows (same key) into a single row:
+// - if one copy was reviewed (has a comment), it's the one that survives
+// - any comment/user found on the other copies is carried over to the
+//   survivor if it's missing one
+// - all extra copies are removed
+function dedupeRawData() {
+  const groups = {};
+  rawData.forEach(r => {
+    const k = rowKey(r);
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(r);
+  });
+
+  let removed = 0;
+  const survivors = [];
+  Object.values(groups).forEach(rows => {
+    if (rows.length === 1) { survivors.push(rows[0]); return; }
+    const reviewed = rows.find(r => (userData[r._id]?.comment || '').trim() !== '');
+    const keep = reviewed || rows[0];
+    rows.forEach(r => {
+      if (r._id === keep._id) return;
+      const ud = userData[r._id];
+      if (ud && (ud.comment || ud.user)) {
+        if (!userData[keep._id]) userData[keep._id] = { comment: '', user: '' };
+        if (!userData[keep._id].comment && ud.comment) userData[keep._id].comment = ud.comment;
+        if (!userData[keep._id].user && ud.user) userData[keep._id].user = ud.user;
+      }
+      delete userData[r._id];
+      removed++;
+    });
+    survivors.push(keep);
+  });
+
+  rawData = survivors;
+  return removed;
+}
+
+// Returns groups of rows that are exact duplicates of each other (without
+// touching anything), used for the counter and the "Review Duplicates" popup
+function findExactDuplicateGroups() {
+  const groups = {};
+  rawData.forEach(r => {
+    const k = rowKey(r);
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(r);
+  });
+  return Object.values(groups).filter(g => g.length > 1);
+}
+
+// Returns the count of extra rows only (not the number of groups) — this is
+// what shows up in the notification
+function countExactDuplicates() {
+  return findExactDuplicateGroups().reduce((sum, g) => sum + (g.length - 1), 0);
+}
 
 // ── SIDEBAR NAV ─────────────────────────────────────
 function openSidebar() {
@@ -2293,13 +2405,23 @@ async function handleUnifiedUpload(files) {
       const headers = json[0].map(h => String(h || '').trim().toLowerCase());
       
       // Detection Logic
-      if (headers.includes('error_type') || headers.includes('expected_scan') || headers.includes('actual_scan')) {
+      const isScanOos = headers.includes('error_type') || headers.includes('expected_scan') || headers.includes('actual_scan');
+      const isOverShort = headers.includes('symptoms') && headers.includes('quantity') && (headers.includes('container') || headers.includes('asin') || headers.includes('user_id'));
+      const isBinCollision = headers.includes('stow volume') || headers.includes('dpmo') || headers.includes('gl_name') || headers.includes('stow_volume') || headers.includes('manager');
+
+      if (isScanOos) {
         $('loader').style.display = 'none';
         $('dashboard').style.display = 'block';
         switchSection('scanoos');
         soosHandleFiles(files);
         return;
-      } else if (headers.includes('stow volume') || headers.includes('dpmo') || headers.includes('manager') || headers.includes('gl_name') || headers.includes('stow_volume')) {
+      } else if (isOverShort) {
+        $('loader').style.display = 'none';
+        $('dashboard').style.display = 'block';
+        switchSection('overshort');
+        osHandleFiles(files);
+        return;
+      } else if (isBinCollision) {
         $('loader').style.display = 'none';
         $('dashboard').style.display = 'block';
         switchSection('bincollisions');
@@ -2333,8 +2455,6 @@ async function osHandleFiles(files) {
   $('uploadScreen').style.display = 'none';
   $('loader').style.display = 'flex';
 
-  const rowKey = r => KEEP_COLS.map(col => String(r[col] ?? '').trim().toLowerCase()).join('|');
-
   const existingMap = {};
   rawData.forEach(r => {
     const k = rowKey(r);
@@ -2348,7 +2468,7 @@ async function osHandleFiles(files) {
       const data = await readFileAsArrayBuffer(file);
       const wb = XLSX.read(data, { type: 'array', cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+      const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
       if (!json || json.length < 2) continue;
       const fileHeaders = json[0].map(h => String(h || '').trim().toLowerCase());
       const rows = json.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
@@ -2394,6 +2514,8 @@ async function osHandleFiles(files) {
   }
   rawData.push(...newRows);
   redoStack = []; preEditState = null; selectedIds.clear();
+
+  refreshDupeBadge();
   
   uploadTime = new Date().getTime();
   setUploadTime(uploadTime);
@@ -2449,7 +2571,8 @@ function filt() {
       if ((u.comment || '').trim()) return false;
     }
     if (q) {
-      const hay = `${row.user_id} ${row.container} ${row.asin}`.toLowerCase();
+      const u = userData[row._id] || {};
+      const hay = `${row.user_id} ${row.container} ${row.asin} ${u.comment || ''} ${u.user || ''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -2567,7 +2690,7 @@ function drawTable() {
     const displaySymp = rawSymp ? (rawSymp.charAt(0).toUpperCase() + rawSymp.slice(1).toLowerCase()) : '';
 
     let ts = row.timestamp || '';
-    if(ts.includes('T')){ const [d,t] = ts.split('T'); ts = `${d} ${(t||'').slice(0,5)}`; }
+    if(ts.includes('T')){ const [d,t] = ts.split('T'); ts = `${d} ${(t||'').slice(0,8)}`; }
 
     const cFilled = (u.comment||'').trim() ? 'has-value' : '';
     const uFilled = (u.user||'').trim() ? 'has-value' : '';
@@ -2664,6 +2787,7 @@ function updateUndoRedoUI() {
   const btnU = $('btnUndo'), btnR = $('btnRedo');
   if (btnU) btnU.classList.toggle('active', historyStack.length > 0);
   if (btnR) btnR.classList.toggle('active', redoStack.length > 0);
+  if (typeof refreshDupeBadge === 'function') refreshDupeBadge();
 }
 function undo() {
   if (!historyStack.length) { toast('Nothing to undo', 'error'); return; }
@@ -2870,7 +2994,7 @@ function compareShiftsMain() {
       <div class="summary-card" style="--card-accent:#8b5cf6;"><div class="sc-title">End Shift</div><div class="sc-val" style="color:#8b5cf6;">${shiftEndData.length}</div></div>
       <div class="summary-card" style="--card-accent:#10d9a0;"><div class="sc-title">Resolved</div><div class="sc-val" style="color:var(--ok);">${resolved}</div></div>
       <div class="summary-card" style="--card-accent:#f43f5e;"><div class="sc-title">New Items</div><div class="sc-val" style="color:var(--err);">${newItems}</div></div>
-      <div class="summary-card" style="--card-accent:#f59e0b;"><div class="sc-title">Persistent</div><div class="sc-val" style="color:var(--pri);">${persistent}</div></div>
+      <div class="summary-card" style="--card-accent:#ff9900;"><div class="sc-title">Persistent</div><div class="sc-val" style="color:var(--pri);">${persistent}</div></div>
     </div>
   `;
 }
@@ -3106,7 +3230,7 @@ function renderSummaryReport() {
             tooltip: {
               enabled: true,
               backgroundColor: 'rgba(14,22,40,0.95)',
-              borderColor: 'rgba(245,158,11,0.3)',
+              borderColor: 'rgba(255,153,0,0.3)',
               borderWidth: 1,
               titleColor: '#e2e8f0',
               bodyColor: '#94a3b8',
@@ -3329,7 +3453,7 @@ function renderSummaryReport() {
     // Gradient fill for total — lighter in light mode
     const grad = ctx2.createLinearGradient(0, 0, 0, 220);
     grad.addColorStop(0, isLight ? 'rgba(217,119,6,0.15)' : 'rgba(245,158,11,0.28)');
-    grad.addColorStop(1, 'rgba(167,139,250,0.0)');
+    grad.addColorStop(1, 'rgba(99,102,241,0.0)');
 
     const gradShort = ctx2.createLinearGradient(0, 0, 0, 220);
     gradShort.addColorStop(0, isLight ? 'rgba(217,119,6,0.07)' : 'rgba(96,165,250,0.12)');
@@ -3692,7 +3816,7 @@ function renderSummaryReport() {
   box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06);
   overflow:hidden; animation: popupIn .18s cubic-bezier(0.16,1,0.3,1);
 ">
-  <div id="upHeader" style="padding:1rem 1.2rem .8rem; background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(124,58,237,.08)); border-bottom:1px solid var(--brd); display:flex; align-items:center; gap:.7rem;">
+  <div id="upHeader" style="padding:1rem 1.2rem .8rem; background:linear-gradient(135deg,rgba(255,153,0,.16),rgba(99,102,241,.10)); border-bottom:1px solid var(--brd); display:flex; align-items:center; gap:.7rem;">
     <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--pri),var(--acc));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
       <span class="material-icons-round" style="font-size:1.1rem;color:#fff;">person</span>
     </div>
@@ -3773,13 +3897,13 @@ function openUserPopup(userId, cat, event) {
     const sympLow = symp.toLowerCase();
     const color = sympLow === 'shortage' ? 'var(--pri)' : 'var(--err)';
     let ts = r.timestamp || '';
-    if(ts.includes('T')){ const [d,t] = ts.split('T'); ts = `${d} ${(t||'').slice(0,5)}`; }
+    if(ts.includes('T')){ const [d,t] = ts.split('T'); ts = `${d} ${(t||'').slice(0,8)}`; }
     const ud = userData[r._id] || {};
     return `
       <div class="up-record">
         <div class="up-record-top">
           <span style="background:rgba(245,158,11,.12);color:var(--cyan);font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;">${esc(r.container||'')}</span>
-          <span style="background:rgba(124,58,237,.12);color:#a78bfa;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;">${esc(r.asin||'')}</span>
+          <span style="background:rgba(99,102,241,.12);color:#6366f1;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;">${esc(r.asin||'')}</span>
           <span style="color:${color};font-size:.68rem;font-weight:700;margin-left:auto;">${esc(symp)}</span>
           <span style="color:var(--mut);font-size:.68rem;">Qty: <b style="color:var(--txt)">${esc(r.quantity||'')}</b></span>
         </div>
@@ -3808,6 +3932,146 @@ function closeUserPopup() {
   document.getElementById('userPopupOverlay').style.display = 'none';
 }
 </script>
+
+<!-- ===================================================== -->
+<!--  DUPLICATES REVIEW POPUP                               -->
+<!-- ===================================================== -->
+<div id="dupesPopup" style="display:none;position:fixed;z-index:9999;top:6vh;left:50%;transform:translateX(-50%);width:min(640px,92vw);max-height:88vh;background:var(--s1);border:1px solid var(--brd);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;flex-direction:column;">
+  <div style="display:flex;align-items:center;gap:.6rem;padding:1rem 1.2rem;border-bottom:1px solid var(--brd);">
+    <span class="material-icons-round" style="color:var(--err);">content_copy</span>
+    <div>
+      <div style="font-weight:800;font-size:.95rem;">Review Duplicates</div>
+      <div style="font-size:.72rem;color:var(--mut);" id="dupesSubtitle">Rows that are an exact match across every column</div>
+    </div>
+    <span class="material-icons-round" onclick="closeDuplicatesPopup()" style="margin-left:auto;cursor:pointer;color:var(--mut);font-size:1.1rem;" onmouseover="this.style.color='var(--err)'" onmouseout="this.style.color='var(--mut)'">close</span>
+  </div>
+  <div id="dupesGroups" style="padding:1rem 1.2rem;overflow-y:auto;display:flex;flex-direction:column;gap:1rem;"></div>
+</div>
+<div id="dupesOverlay" onclick="closeDuplicatesPopup()" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.5);"></div>
+
+<style>
+.dupe-group { background:var(--s2); border:1px solid var(--brd); border-radius:10px; padding:.7rem .8rem; }
+.dupe-group-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+.dupe-group-title { font-size:.75rem; font-weight:700; color:var(--mut); }
+.dupe-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; background:var(--s1); border:1px solid var(--brd); border-radius:8px; padding:.45rem .6rem; margin-bottom:.4rem; font-size:.75rem; }
+.dupe-row:last-child { margin-bottom:0; }
+.dupe-row .dupe-info { display:flex; flex-direction:column; gap:.15rem; flex:1; min-width:0; }
+.dupe-row .dupe-meta { color:var(--mut); font-size:.68rem; }
+.dupe-row .dupe-comment { color:var(--ok); font-size:.68rem; }
+.dupe-keep-btn { background:var(--pri); color:#0a0f1e; border:none; border-radius:6px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+.dupe-keep-btn:hover { filter:brightness(1.1); }
+.dupe-ignore-btn { background:transparent; color:var(--mut); border:1px solid var(--brd); border-radius:6px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+.dupe-ignore-btn:hover { border-color:var(--mut); color:var(--txt); }
+</style>
+
+<script>
+// Renders the count badge on the "Review Duplicates" button above
+function refreshDupeBadge() {
+  const badge = $('dupeBadge');
+  if (!badge) return;
+  const n = countExactDuplicates();
+  if (n > 0) {
+    badge.textContent = n > 99 ? '99+' : n;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// Opens the duplicates review popup and shows each group of exact-match
+// rows, letting the user pick which row survives, or ignore the group
+function openDuplicatesPopup() {
+  const groups = findExactDuplicateGroups();
+  const container = $('dupesGroups');
+  $('dupesSubtitle').textContent = groups.length
+    ? `Found ${groups.length} group(s) (${groups.reduce((s,g)=>s+g.length,0)} rows) that are exact matches`
+    : 'No duplicates right now';
+
+  if (!groups.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--mut);font-size:.8rem;padding:1.5rem 0;">No exact-match rows found 👍</div>';
+  } else {
+    container.innerHTML = groups.map((rows, gi) => {
+      const rowsHTML = rows.map(r => {
+        const ud = userData[r._id] || {};
+        // Full precision on purpose (including seconds) — this is what
+        // usually distinguishes rows that otherwise look identical
+        let ts = String(r.timestamp || '').replace('T', ' ');
+        return `
+          <div class="dupe-row">
+            <div class="dupe-info">
+              <div><b>${esc(r.user_id||'')}</b> — ${esc(r.container||'')} — ${esc(r.asin||'')}</div>
+              <div class="dupe-meta">Qty: ${esc(r.quantity||'')} · ${esc(r.symptoms||'')} · Timestamp: ${esc(ts)}</div>
+              ${ud.comment ? `<div class="dupe-comment">💬 ${esc(ud.comment)}</div>` : '<div class="dupe-meta">Not reviewed</div>'}
+            </div>
+            <button class="dupe-keep-btn" onclick="resolveDuplicateGroup(${gi}, ${r._id})">Keep this, remove rest</button>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="dupe-group" data-gi="${gi}">
+          <div class="dupe-group-head">
+            <span class="dupe-group-title">Group ${gi+1} — ${rows.length} matching rows</span>
+            <button class="dupe-ignore-btn" onclick="ignoreDuplicateGroup(${gi})">Leave as is</button>
+          </div>
+          ${rowsHTML}
+        </div>
+      `;
+    }).join('');
+    // Cache the groups temporarily so the buttons can reach them by index
+    window._dupeGroupsCache = groups;
+  }
+
+  $('dupesPopup').style.display = 'flex';
+  $('dupesOverlay').style.display = 'block';
+}
+
+function closeDuplicatesPopup() {
+  $('dupesPopup').style.display = 'none';
+  $('dupesOverlay').style.display = 'none';
+}
+
+// The user picked a specific row to keep from a group, so we remove the
+// rest of the group and carry over any comment/user to the surviving row
+function resolveDuplicateGroup(groupIndex, keepId) {
+  const groups = window._dupeGroupsCache || [];
+  const rows = groups[groupIndex];
+  if (!rows) return;
+
+  historyStack.push({ rawData: [...rawData], userData: JSON.parse(JSON.stringify(userData)) });
+  if (historyStack.length > 50) historyStack.shift();
+
+  rows.forEach(r => {
+    if (r._id === keepId) return;
+    const ud = userData[r._id];
+    if (ud && (ud.comment || ud.user)) {
+      if (!userData[keepId]) userData[keepId] = { comment: '', user: '' };
+      if (!userData[keepId].comment && ud.comment) userData[keepId].comment = ud.comment;
+      if (!userData[keepId].user && ud.user) userData[keepId].user = ud.user;
+    }
+    delete userData[r._id];
+  });
+  const removeIds = new Set(rows.filter(r => r._id !== keepId).map(r => r._id));
+  rawData = rawData.filter(r => !removeIds.has(r._id));
+
+  toast('Duplicate resolved — kept row saved, the rest removed', 'success');
+  updateKPIs(); filt(); updateUndoRedoUI(); drawTable();
+  refreshDupeBadge();
+  openDuplicatesPopup(); // re-render so the resolved group disappears
+}
+
+// The user decided this isn't actually a real duplicate (e.g. two genuinely
+// different events at the exact same second), so leave it untouched
+function ignoreDuplicateGroup(groupIndex) {
+  const groups = window._dupeGroupsCache || [];
+  groups[groupIndex] = null;
+  const el = document.querySelector(`.dupe-group[data-gi="${groupIndex}"]`);
+  if (el) el.remove();
+}
+</script>
+
+<!-- ===================================================== -->
+<!--  END DUPLICATES REVIEW POPUP                            -->
+<!-- ===================================================== -->
 
 <!-- ===================================================== -->
 <!--  BIN COLLISIONS DASHBOARD                              -->
@@ -3889,10 +4153,33 @@ function bcDrawDonut(canvasId, valEl, legendEl, keys, map, total, prevChart, col
           legend: { display: false },
           tooltip: { callbacks: { label: c => c.label + ': ' + c.parsed + ' (' + bcPct(c.parsed, total) + '%)' } }
         }
-      }
+      },
+      plugins: [{
+        id: 'centerTextPlugin',
+        beforeDraw: function(chart) {
+          const width = chart.width;
+          const height = chart.height;
+          const ctx = chart.ctx;
+          ctx.restore();
+          const val = bcFmt(total);
+          const lbl = "Defects";
+          ctx.textBaseline = "middle";
+          ctx.font = "800 22px Inter";
+          ctx.fillStyle = "#f0f4ff";
+          const textX = Math.round((width - ctx.measureText(val).width) / 2);
+          const textY = height / 2 - 6;
+          ctx.fillText(val, textX, textY);
+          ctx.font = "600 11px Inter";
+          ctx.fillStyle = "#94a3b8";
+          const lblX = Math.round((width - ctx.measureText(lbl).width) / 2);
+          ctx.fillText(lbl, lblX, height / 2 + 12);
+          ctx.save();
+        }
+      }]
     });
   }
-  if (valEl) $(valEl).textContent = bcFmt(total);
+  // Hide HTML text so it doesn't overlap the canvas drawing
+  if (valEl && $(valEl)) $(valEl).parentElement.style.opacity = '0';
   if (legendEl) {
     $(legendEl).innerHTML = keys.map((k, i) => `
       <div class="bc-legend-item">
@@ -4415,12 +4702,12 @@ function soosRender() {
         datasets: [{
           label: 'Defects',
           data: dayKeys.map(k => dayMap[k]),
-          borderColor: '#f59e0b',
-          backgroundColor: 'rgba(245,158,11,.15)',
+          borderColor: '#ff9900',
+          backgroundColor: 'rgba(255,153,0,.15)',
           fill: true,
           tension: .35,
           pointRadius: 2,
-          pointBackgroundColor: '#f59e0b'
+          pointBackgroundColor: '#ff9900'
         }]
       },
       options: {
@@ -4437,8 +4724,8 @@ function soosRender() {
   /* --- ERROR TYPE DONUT (handled earlier with SOOS_COLORS) --- */
 
   const offTop10 = userKeys.slice(0, 10);
-  bcDrawBar('soosExecOffendersChart', offTop10, offTop10.map(u => userMap[u]), '#f59e0b', total);
-  bcDrawBar('soosOffendersChart', offTop10, offTop10.map(u => userMap[u]), '#f59e0b', total);
+  bcDrawBar('soosExecOffendersChart', offTop10, offTop10.map(u => userMap[u]), '#ff9900', total);
+  bcDrawBar('soosOffendersChart', offTop10, offTop10.map(u => userMap[u]), '#ff9900', total);
 
   let offTableHTML = '<h3>Top Offenders — All Associates</h3><table><thead><tr><th>#</th><th>Associate</th><th>Tenure (days)</th><th>Defects</th><th>%</th></tr></thead><tbody>';
   userKeys.forEach((uk, i) => {
