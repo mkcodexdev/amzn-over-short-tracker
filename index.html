@@ -529,10 +529,10 @@ html { background: #080c12; }
 .kpi.c-red    { background: linear-gradient(180deg, rgba(244,63,94,.06), rgba(244,63,94,.06)), var(--s1); }
 .kpi.c-green  { background: linear-gradient(180deg, rgba(16,217,160,.06), rgba(16,217,160,.06)), var(--s1); }
 .kpi.c-orange { background: linear-gradient(180deg, rgba(245,158,11,.06), rgba(245,158,11,.06)), var(--s1); }
-.kpi.c-blue   { border: 1px solid rgba(6,182,212,.35); }
-.kpi.c-red    { border: 1px solid rgba(244,63,94,.35); }
-.kpi.c-green  { border: 1px solid rgba(16,217,160,.35); }
-.kpi.c-orange { border: 1px solid rgba(245,158,11,.35); }
+.kpi.c-blue   { border: 1px solid rgba(6,182,212,.15); border-top: 3px solid #06b6d4; }
+.kpi.c-red    { border: 1px solid rgba(244,63,94,.15); border-top: 3px solid #f43f5e; }
+.kpi.c-green  { border: 1px solid rgba(16,217,160,.15); border-top: 3px solid #10d9a0; }
+.kpi.c-orange { border: 1px solid rgba(245,158,11,.15); border-top: 3px solid #f59e0b; }
 
 .kpi:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.6), 0 0 24px rgba(var(--pri-rgb),.08); z-index: 2; }
 .kpi.c-blue:hover   { border-color: rgba(6,182,212,.65); }
@@ -1430,10 +1430,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
       <button class="icon-btn-sq" id="btnRedo" onclick="redo()" title="Redo (Ctrl+Y)">
         <span class="material-icons-round">redo</span>
       </button>
-      <button class="icon-btn-sq" id="btnReviewDupes" onclick="openDuplicatesPopup()" title="Review Duplicates" style="position:relative;">
-        <span class="material-icons-round">content_copy</span>
-        <span id="dupeBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--err);color:#fff;font-size:.6rem;font-weight:800;border-radius:10px;min-width:16px;height:16px;align-items:center;justify-content:center;padding:0 3px;"></span>
-      </button>
+
 
       <div class="tb-divider"></div>
 
@@ -2487,17 +2484,21 @@ async function osHandleFiles(files) {
         const cmtVal = cmtIdx !== -1 ? String(row[cmtIdx] || '').trim() : '';
         const usrVal = usrIdx !== -1 ? String(row[usrIdx] || '').trim() : '';
         if (c < existingIds.length) {
+          // Row already exists in our table at least this many times.
+          // Update comments/user info if the new file has them and old doesn't.
           const eid = existingIds[c];
           if (cmtVal || usrVal) {
             if (!userData[eid]) userData[eid] = { comment: '', user: '' };
-            if (cmtVal) userData[eid].comment = cmtVal;
-            if (usrVal) userData[eid].user = usrVal;
+            if (cmtVal && !userData[eid].comment) userData[eid].comment = cmtVal;
+            if (usrVal && !userData[eid].user) userData[eid].user = usrVal;
           }
         } else {
+          // This is a genuinely new row (or an additional legitimate duplicate)
           const rowId = nextRowId++;
           obj._id = rowId;
           if (cmtVal || usrVal) userData[rowId] = { comment: cmtVal, user: usrVal };
           newRows.push(obj);
+          
           if (!existingMap[k]) existingMap[k] = [];
           existingMap[k].push(rowId);
         }
@@ -2515,8 +2516,6 @@ async function osHandleFiles(files) {
   rawData.push(...newRows);
   redoStack = []; preEditState = null; selectedIds.clear();
 
-  refreshDupeBadge();
-  
   uploadTime = new Date().getTime();
   setUploadTime(uploadTime);
 
@@ -3331,6 +3330,176 @@ function renderSummaryReport() {
   usersWidget.appendChild(usersGrid);
   container.appendChild(usersWidget);
 
+  // ── HIGHLIGHTS, LOWLIGHTS & CORRECTIVE ACTIONS ─────────────────
+  (function renderInsights() {
+    const nonSpx = sorted.filter(([cat]) => cat !== 'SPX5');
+    const allUserTotals = {};
+    Object.entries(catUsers).forEach(([cat, users]) => {
+      Object.entries(users).forEach(([u, q]) => {
+        if (u === 'Unknown') return;
+        allUserTotals[u] = (allUserTotals[u] || 0) + q;
+      });
+    });
+    const rankedUsers = Object.entries(allUserTotals).sort((a, b) => b[1] - a[1]);
+    const unreviewedCount = rawData.filter(r => (userData[r._id]?.comment || '').trim() === '').length;
+    const reviewedCount = rawData.length - unreviewedCount;
+    const reviewPct = rawData.length ? ((reviewedCount / rawData.length) * 100).toFixed(1) : 0;
+
+    let goodHtml = '';
+    if (nonSpx.length) {
+      const best = nonSpx[nonSpx.length - 1];
+      const bestPct = totalErrors > 0 ? ((best[1] / totalErrors) * 100).toFixed(1) : 0;
+      goodHtml += `<div class="insight-item good">Lowest-impact category is <b>${esc(best[0])}</b> — only <b>${best[1]}</b> defects (${bestPct}%).</div>`;
+    }
+    goodHtml += `<div class="insight-item good"><b>${reviewPct}%</b> of records have been reviewed and categorized so far.</div>`;
+    if (unreviewedCount === 0 && rawData.length > 0) {
+      goodHtml += `<div class="insight-item good">All records have been reviewed — no pending items.</div>`;
+    }
+    if (rankedUsers.length > 1) {
+      const cleanest = rankedUsers[rankedUsers.length - 1];
+      goodHtml += `<div class="insight-item good"><b>${esc(cleanest[0])}</b> has the lowest defect footprint (${cleanest[1]}).</div>`;
+    }
+    if (!goodHtml) goodHtml = `<div class="insight-item good">No data yet.</div>`;
+
+    let badHtml = '';
+    if (nonSpx.length) {
+      const worst = nonSpx[0];
+      const worstPct = totalErrors > 0 ? ((worst[1] / totalErrors) * 100).toFixed(1) : 0;
+      badHtml += `<div class="insight-item bad">Highest-impact category is <b>${esc(worst[0])}</b> — <b>${worst[1]}</b> defects (${worstPct}%).</div>`;
+    }
+    if (rankedUsers.length) {
+      const worstU = rankedUsers[0];
+      badHtml += `<div class="insight-item bad"><b>${esc(worstU[0])}</b> has the highest defect qty (${worstU[1]}).</div>`;
+    }
+    if (unreviewedCount > 0) {
+      badHtml += `<div class="insight-item bad"><b>${unreviewedCount}</b> record(s) are still unreviewed / not returned.</div>`;
+    }
+    if (!badHtml) badHtml = `<div class="insight-item good">No major issues detected.</div>`;
+
+    let actionHtml = '';
+    nonSpx.slice(0, 3).forEach(([cat]) => {
+      const users = Object.entries(catUsers[cat] || {}).filter(([u]) => u !== 'Unknown').sort((a, b) => b[1] - a[1]).slice(0, 3);
+      if (!users.length) return;
+      const names = users.map(([u, q]) => `${esc(u)} (${q})`).join(', ');
+      actionHtml += `<div class="insight-item action"><b>${esc(cat)}</b> — coaching recommended for: ${names}.</div>`;
+    });
+    const spxItem = sorted.find(([cat]) => cat === 'SPX5');
+    if (spxItem) {
+      actionHtml += `<div class="insight-item action"><b>SPX5</b> — ${spxItem[1]} defects flagged for escalation review.</div>`;
+    }
+    if (!actionHtml) actionHtml = `<div class="insight-item action">No corrective actions needed right now.</div>`;
+
+    const widget = document.createElement('div');
+    widget.className = 'chart-widget chart-widget--full';
+    widget.innerHTML = `
+      <div class="chart-widget-title">Highlights, Lowlights & Corrective Actions</div>
+      <div class="insight-grid">
+        <div class="insight-card">
+          <div class="insight-card-title" style="color:var(--ok);">🟢 Highlights</div>
+          ${goodHtml}
+        </div>
+        <div class="insight-card">
+          <div class="insight-card-title" style="color:var(--err);">🔴 Lowlights</div>
+          ${badHtml}
+        </div>
+        <div class="insight-card">
+          <div class="insight-card-title" style="color:var(--pri);">⚡ Corrective Actions</div>
+          ${actionHtml}
+        </div>
+      </div>
+    `;
+    container.appendChild(widget);
+  })();
+
+  // ── TOP OFFENDERS ────────────────────────────────────────────────
+  (function renderTopOffendersWidget() {
+    const allUserTotals = {};
+    Object.entries(catUsers).forEach(([cat, users]) => {
+      Object.entries(users).forEach(([u, q]) => {
+        if (u === 'Unknown') return;
+        allUserTotals[u] = (allUserTotals[u] || 0) + q;
+      });
+    });
+    const topUsers = Object.entries(allUserTotals).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const totalAll = Object.values(allUserTotals).reduce((s, v) => s + v, 0);
+
+    const asinMap = {};
+    rawData.forEach(r => {
+      const a = String(r.asin || '').trim() || 'Unknown';
+      const q = Math.abs(parseFloat(r.quantity) || 0);
+      if (!asinMap[a]) asinMap[a] = { qty: 0, count: 0 };
+      asinMap[a].qty += q; asinMap[a].count++;
+    });
+    const topAsins = Object.entries(asinMap).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10);
+
+    let userRows = '';
+    topUsers.forEach(([u, q], i) => {
+      const pct = totalAll > 0 ? ((q / totalAll) * 100).toFixed(1) : '0.0';
+      userRows += `<tr><td>${i + 1}</td><td>${esc(u)}</td><td style="font-weight:700;">${q}</td><td>${pct}%</td></tr>`;
+    });
+    let asinRows = '';
+    topAsins.forEach(([a, d], i) => {
+      asinRows += `<tr><td>${i + 1}</td><td>${esc(a)}</td><td style="font-weight:700;">${d.qty}</td><td>${d.count}</td></tr>`;
+    });
+
+    const widget = document.createElement('div');
+    widget.className = 'chart-widget chart-widget--full';
+    widget.innerHTML = `
+      <div class="chart-widget-title">Top Offenders</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:.72rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">Top 10 Users (All Categories)</div>
+          <div class="t-card" style="max-height:none;">
+            <table>
+              <thead><tr><th>#</th><th>User</th><th>Qty</th><th>%</th></tr></thead>
+              <tbody>${userRows || '<tr><td colspan="4" style="text-align:center;color:var(--mut);">No data</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.72rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">Top 10 ASINs by Qty</div>
+          <div class="t-card" style="max-height:none;">
+            <table>
+              <thead><tr><th>#</th><th>ASIN</th><th>Qty</th><th>Defects</th></tr></thead>
+              <tbody>${asinRows || '<tr><td colspan="4" style="text-align:center;color:var(--mut);">No data</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(widget);
+  })();
+
+  // ── THRESHOLD / DPMO CALCULATOR ──────────────────────────────────
+  (function renderThresholdWidget() {
+    const totalQtyAll = rawData.reduce((s, r) => s + Math.abs(parseFloat(r.quantity) || 0), 0);
+    const widget = document.createElement('div');
+    widget.className = 'chart-widget chart-widget--full';
+    widget.innerHTML = `
+      <div class="chart-widget-title">Threshold / DPMO Calculator</div>
+      <div class="threshold-inputs">
+        <div>
+          <label>Opportunities</label>
+          <input type="number" id="thOpp" placeholder="e.g. 100485" oninput="calcThresholdMain()">
+        </div>
+        <div>
+          <label>Total O&amp;S Qty</label>
+          <input type="number" id="thTotal" value="${totalQtyAll}" oninput="calcThresholdMain()">
+        </div>
+        <div>
+          <label>Threshold (DPMO)</label>
+          <input type="number" id="thVal" value="3400" oninput="calcThresholdMain()">
+        </div>
+      </div>
+      <div class="threshold-results">
+        <div class="threshold-box"><div class="tb-label">DPMO</div><div class="tb-val" id="thDpmo">-</div></div>
+        <div class="threshold-box"><div class="tb-label">Threshold</div><div class="tb-val" id="thDisp">3,400</div></div>
+        <div class="threshold-box"><div class="tb-label">Status</div><div style="margin-top:.4rem;"><span class="status-pill" id="thStatus">-</span></div></div>
+      </div>
+    `;
+    container.appendChild(widget);
+    setTimeout(() => { if (window.calcThresholdMain) window.calcThresholdMain(); }, 0);
+  })();
   // ── TREND CHART WIDGET ──────────────────────────────────────
   const trendWidget = document.createElement('div');
   trendWidget.className = 'chart-widget chart-widget--full';
@@ -3629,176 +3798,6 @@ function renderSummaryReport() {
   setTimeout(buildTrendChart, 150);
   // ────────────────────────────────────────────────────────────
 
-  // ── HIGHLIGHTS, LOWLIGHTS & CORRECTIVE ACTIONS ─────────────────
-  (function renderInsights() {
-    const nonSpx = sorted.filter(([cat]) => cat !== 'SPX5');
-    const allUserTotals = {};
-    Object.entries(catUsers).forEach(([cat, users]) => {
-      Object.entries(users).forEach(([u, q]) => {
-        if (u === 'Unknown') return;
-        allUserTotals[u] = (allUserTotals[u] || 0) + q;
-      });
-    });
-    const rankedUsers = Object.entries(allUserTotals).sort((a, b) => b[1] - a[1]);
-    const unreviewedCount = rawData.filter(r => (userData[r._id]?.comment || '').trim() === '').length;
-    const reviewedCount = rawData.length - unreviewedCount;
-    const reviewPct = rawData.length ? ((reviewedCount / rawData.length) * 100).toFixed(1) : 0;
-
-    let goodHtml = '';
-    if (nonSpx.length) {
-      const best = nonSpx[nonSpx.length - 1];
-      const bestPct = totalErrors > 0 ? ((best[1] / totalErrors) * 100).toFixed(1) : 0;
-      goodHtml += `<div class="insight-item good">Lowest-impact category is <b>${esc(best[0])}</b> — only <b>${best[1]}</b> defects (${bestPct}%).</div>`;
-    }
-    goodHtml += `<div class="insight-item good"><b>${reviewPct}%</b> of records have been reviewed and categorized so far.</div>`;
-    if (unreviewedCount === 0 && rawData.length > 0) {
-      goodHtml += `<div class="insight-item good">All records have been reviewed — no pending items.</div>`;
-    }
-    if (rankedUsers.length > 1) {
-      const cleanest = rankedUsers[rankedUsers.length - 1];
-      goodHtml += `<div class="insight-item good"><b>${esc(cleanest[0])}</b> has the lowest defect footprint (${cleanest[1]}).</div>`;
-    }
-    if (!goodHtml) goodHtml = `<div class="insight-item good">No data yet.</div>`;
-
-    let badHtml = '';
-    if (nonSpx.length) {
-      const worst = nonSpx[0];
-      const worstPct = totalErrors > 0 ? ((worst[1] / totalErrors) * 100).toFixed(1) : 0;
-      badHtml += `<div class="insight-item bad">Highest-impact category is <b>${esc(worst[0])}</b> — <b>${worst[1]}</b> defects (${worstPct}%).</div>`;
-    }
-    if (rankedUsers.length) {
-      const worstU = rankedUsers[0];
-      badHtml += `<div class="insight-item bad"><b>${esc(worstU[0])}</b> has the highest defect qty (${worstU[1]}).</div>`;
-    }
-    if (unreviewedCount > 0) {
-      badHtml += `<div class="insight-item bad"><b>${unreviewedCount}</b> record(s) are still unreviewed / not returned.</div>`;
-    }
-    if (!badHtml) badHtml = `<div class="insight-item good">No major issues detected.</div>`;
-
-    let actionHtml = '';
-    nonSpx.slice(0, 3).forEach(([cat]) => {
-      const users = Object.entries(catUsers[cat] || {}).filter(([u]) => u !== 'Unknown').sort((a, b) => b[1] - a[1]).slice(0, 3);
-      if (!users.length) return;
-      const names = users.map(([u, q]) => `${esc(u)} (${q})`).join(', ');
-      actionHtml += `<div class="insight-item action"><b>${esc(cat)}</b> — coaching recommended for: ${names}.</div>`;
-    });
-    const spxItem = sorted.find(([cat]) => cat === 'SPX5');
-    if (spxItem) {
-      actionHtml += `<div class="insight-item action"><b>SPX5</b> — ${spxItem[1]} defects flagged for escalation review.</div>`;
-    }
-    if (!actionHtml) actionHtml = `<div class="insight-item action">No corrective actions needed right now.</div>`;
-
-    const widget = document.createElement('div');
-    widget.className = 'chart-widget chart-widget--full';
-    widget.innerHTML = `
-      <div class="chart-widget-title">Highlights, Lowlights & Corrective Actions</div>
-      <div class="insight-grid">
-        <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--ok);">🟢 Highlights</div>
-          ${goodHtml}
-        </div>
-        <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--err);">🔴 Lowlights</div>
-          ${badHtml}
-        </div>
-        <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--pri);">⚡ Corrective Actions</div>
-          ${actionHtml}
-        </div>
-      </div>
-    `;
-    container.appendChild(widget);
-  })();
-
-  // ── TOP OFFENDERS ────────────────────────────────────────────────
-  (function renderTopOffendersWidget() {
-    const allUserTotals = {};
-    Object.entries(catUsers).forEach(([cat, users]) => {
-      Object.entries(users).forEach(([u, q]) => {
-        if (u === 'Unknown') return;
-        allUserTotals[u] = (allUserTotals[u] || 0) + q;
-      });
-    });
-    const topUsers = Object.entries(allUserTotals).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const totalAll = Object.values(allUserTotals).reduce((s, v) => s + v, 0);
-
-    const asinMap = {};
-    rawData.forEach(r => {
-      const a = String(r.asin || '').trim() || 'Unknown';
-      const q = Math.abs(parseFloat(r.quantity) || 0);
-      if (!asinMap[a]) asinMap[a] = { qty: 0, count: 0 };
-      asinMap[a].qty += q; asinMap[a].count++;
-    });
-    const topAsins = Object.entries(asinMap).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10);
-
-    let userRows = '';
-    topUsers.forEach(([u, q], i) => {
-      const pct = totalAll > 0 ? ((q / totalAll) * 100).toFixed(1) : '0.0';
-      userRows += `<tr><td>${i + 1}</td><td>${esc(u)}</td><td style="font-weight:700;">${q}</td><td>${pct}%</td></tr>`;
-    });
-    let asinRows = '';
-    topAsins.forEach(([a, d], i) => {
-      asinRows += `<tr><td>${i + 1}</td><td>${esc(a)}</td><td style="font-weight:700;">${d.qty}</td><td>${d.count}</td></tr>`;
-    });
-
-    const widget = document.createElement('div');
-    widget.className = 'chart-widget chart-widget--full';
-    widget.innerHTML = `
-      <div class="chart-widget-title">Top Offenders</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div>
-          <div style="font-size:.72rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">Top 10 Users (All Categories)</div>
-          <div class="t-card" style="max-height:none;">
-            <table>
-              <thead><tr><th>#</th><th>User</th><th>Qty</th><th>%</th></tr></thead>
-              <tbody>${userRows || '<tr><td colspan="4" style="text-align:center;color:var(--mut);">No data</td></tr>'}</tbody>
-            </table>
-          </div>
-        </div>
-        <div>
-          <div style="font-size:.72rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">Top 10 ASINs by Qty</div>
-          <div class="t-card" style="max-height:none;">
-            <table>
-              <thead><tr><th>#</th><th>ASIN</th><th>Qty</th><th>Defects</th></tr></thead>
-              <tbody>${asinRows || '<tr><td colspan="4" style="text-align:center;color:var(--mut);">No data</td></tr>'}</tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    `;
-    container.appendChild(widget);
-  })();
-
-  // ── THRESHOLD / DPMO CALCULATOR ──────────────────────────────────
-  (function renderThresholdWidget() {
-    const totalQtyAll = rawData.reduce((s, r) => s + Math.abs(parseFloat(r.quantity) || 0), 0);
-    const widget = document.createElement('div');
-    widget.className = 'chart-widget chart-widget--full';
-    widget.innerHTML = `
-      <div class="chart-widget-title">Threshold / DPMO Calculator</div>
-      <div class="threshold-inputs">
-        <div>
-          <label>Opportunities</label>
-          <input type="number" id="thOpp" placeholder="e.g. 100485" oninput="calcThresholdMain()">
-        </div>
-        <div>
-          <label>Total O&amp;S Qty</label>
-          <input type="number" id="thTotal" value="${totalQtyAll}" oninput="calcThresholdMain()">
-        </div>
-        <div>
-          <label>Threshold (DPMO)</label>
-          <input type="number" id="thVal" value="3400" oninput="calcThresholdMain()">
-        </div>
-      </div>
-      <div class="threshold-results">
-        <div class="threshold-box"><div class="tb-label">DPMO</div><div class="tb-val" id="thDpmo">-</div></div>
-        <div class="threshold-box"><div class="tb-label">Threshold</div><div class="tb-val" id="thDisp">3,400</div></div>
-        <div class="threshold-box"><div class="tb-label">Status</div><div style="margin-top:.4rem;"><span class="status-pill" id="thStatus">-</span></div></div>
-      </div>
-    `;
-    container.appendChild(widget);
-    setTimeout(() => { if (window.calcThresholdMain) window.calcThresholdMain(); }, 0);
-  })();
 
   setTimeout(() => {
     const bars = container.querySelectorAll('.chart-bar, .user-bar');
@@ -3933,145 +3932,7 @@ function closeUserPopup() {
 }
 </script>
 
-<!-- ===================================================== -->
-<!--  DUPLICATES REVIEW POPUP                               -->
-<!-- ===================================================== -->
-<div id="dupesPopup" style="display:none;position:fixed;z-index:9999;top:6vh;left:50%;transform:translateX(-50%);width:min(640px,92vw);max-height:88vh;background:var(--s1);border:1px solid var(--brd);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;flex-direction:column;">
-  <div style="display:flex;align-items:center;gap:.6rem;padding:1rem 1.2rem;border-bottom:1px solid var(--brd);">
-    <span class="material-icons-round" style="color:var(--err);">content_copy</span>
-    <div>
-      <div style="font-weight:800;font-size:.95rem;">Review Duplicates</div>
-      <div style="font-size:.72rem;color:var(--mut);" id="dupesSubtitle">Rows that are an exact match across every column</div>
-    </div>
-    <span class="material-icons-round" onclick="closeDuplicatesPopup()" style="margin-left:auto;cursor:pointer;color:var(--mut);font-size:1.1rem;" onmouseover="this.style.color='var(--err)'" onmouseout="this.style.color='var(--mut)'">close</span>
-  </div>
-  <div id="dupesGroups" style="padding:1rem 1.2rem;overflow-y:auto;display:flex;flex-direction:column;gap:1rem;"></div>
-</div>
-<div id="dupesOverlay" onclick="closeDuplicatesPopup()" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.5);"></div>
 
-<style>
-.dupe-group { background:var(--s2); border:1px solid var(--brd); border-radius:10px; padding:.7rem .8rem; }
-.dupe-group-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
-.dupe-group-title { font-size:.75rem; font-weight:700; color:var(--mut); }
-.dupe-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; background:var(--s1); border:1px solid var(--brd); border-radius:8px; padding:.45rem .6rem; margin-bottom:.4rem; font-size:.75rem; }
-.dupe-row:last-child { margin-bottom:0; }
-.dupe-row .dupe-info { display:flex; flex-direction:column; gap:.15rem; flex:1; min-width:0; }
-.dupe-row .dupe-meta { color:var(--mut); font-size:.68rem; }
-.dupe-row .dupe-comment { color:var(--ok); font-size:.68rem; }
-.dupe-keep-btn { background:var(--pri); color:#0a0f1e; border:none; border-radius:6px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-.dupe-keep-btn:hover { filter:brightness(1.1); }
-.dupe-ignore-btn { background:transparent; color:var(--mut); border:1px solid var(--brd); border-radius:6px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-.dupe-ignore-btn:hover { border-color:var(--mut); color:var(--txt); }
-</style>
-
-<script>
-// Renders the count badge on the "Review Duplicates" button above
-function refreshDupeBadge() {
-  const badge = $('dupeBadge');
-  if (!badge) return;
-  const n = countExactDuplicates();
-  if (n > 0) {
-    badge.textContent = n > 99 ? '99+' : n;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-// Opens the duplicates review popup and shows each group of exact-match
-// rows, letting the user pick which row survives, or ignore the group
-function openDuplicatesPopup() {
-  const groups = findExactDuplicateGroups();
-  const container = $('dupesGroups');
-  $('dupesSubtitle').textContent = groups.length
-    ? `Found ${groups.length} group(s) (${groups.reduce((s,g)=>s+g.length,0)} rows) that are exact matches`
-    : 'No duplicates right now';
-
-  if (!groups.length) {
-    container.innerHTML = '<div style="text-align:center;color:var(--mut);font-size:.8rem;padding:1.5rem 0;">No exact-match rows found 👍</div>';
-  } else {
-    container.innerHTML = groups.map((rows, gi) => {
-      const rowsHTML = rows.map(r => {
-        const ud = userData[r._id] || {};
-        // Full precision on purpose (including seconds) — this is what
-        // usually distinguishes rows that otherwise look identical
-        let ts = String(r.timestamp || '').replace('T', ' ');
-        return `
-          <div class="dupe-row">
-            <div class="dupe-info">
-              <div><b>${esc(r.user_id||'')}</b> — ${esc(r.container||'')} — ${esc(r.asin||'')}</div>
-              <div class="dupe-meta">Qty: ${esc(r.quantity||'')} · ${esc(r.symptoms||'')} · Timestamp: ${esc(ts)}</div>
-              ${ud.comment ? `<div class="dupe-comment">💬 ${esc(ud.comment)}</div>` : '<div class="dupe-meta">Not reviewed</div>'}
-            </div>
-            <button class="dupe-keep-btn" onclick="resolveDuplicateGroup(${gi}, ${r._id})">Keep this, remove rest</button>
-          </div>
-        `;
-      }).join('');
-      return `
-        <div class="dupe-group" data-gi="${gi}">
-          <div class="dupe-group-head">
-            <span class="dupe-group-title">Group ${gi+1} — ${rows.length} matching rows</span>
-            <button class="dupe-ignore-btn" onclick="ignoreDuplicateGroup(${gi})">Leave as is</button>
-          </div>
-          ${rowsHTML}
-        </div>
-      `;
-    }).join('');
-    // Cache the groups temporarily so the buttons can reach them by index
-    window._dupeGroupsCache = groups;
-  }
-
-  $('dupesPopup').style.display = 'flex';
-  $('dupesOverlay').style.display = 'block';
-}
-
-function closeDuplicatesPopup() {
-  $('dupesPopup').style.display = 'none';
-  $('dupesOverlay').style.display = 'none';
-}
-
-// The user picked a specific row to keep from a group, so we remove the
-// rest of the group and carry over any comment/user to the surviving row
-function resolveDuplicateGroup(groupIndex, keepId) {
-  const groups = window._dupeGroupsCache || [];
-  const rows = groups[groupIndex];
-  if (!rows) return;
-
-  historyStack.push({ rawData: [...rawData], userData: JSON.parse(JSON.stringify(userData)) });
-  if (historyStack.length > 50) historyStack.shift();
-
-  rows.forEach(r => {
-    if (r._id === keepId) return;
-    const ud = userData[r._id];
-    if (ud && (ud.comment || ud.user)) {
-      if (!userData[keepId]) userData[keepId] = { comment: '', user: '' };
-      if (!userData[keepId].comment && ud.comment) userData[keepId].comment = ud.comment;
-      if (!userData[keepId].user && ud.user) userData[keepId].user = ud.user;
-    }
-    delete userData[r._id];
-  });
-  const removeIds = new Set(rows.filter(r => r._id !== keepId).map(r => r._id));
-  rawData = rawData.filter(r => !removeIds.has(r._id));
-
-  toast('Duplicate resolved — kept row saved, the rest removed', 'success');
-  updateKPIs(); filt(); updateUndoRedoUI(); drawTable();
-  refreshDupeBadge();
-  openDuplicatesPopup(); // re-render so the resolved group disappears
-}
-
-// The user decided this isn't actually a real duplicate (e.g. two genuinely
-// different events at the exact same second), so leave it untouched
-function ignoreDuplicateGroup(groupIndex) {
-  const groups = window._dupeGroupsCache || [];
-  groups[groupIndex] = null;
-  const el = document.querySelector(`.dupe-group[data-gi="${groupIndex}"]`);
-  if (el) el.remove();
-}
-</script>
-
-<!-- ===================================================== -->
-<!--  END DUPLICATES REVIEW POPUP                            -->
-<!-- ===================================================== -->
 
 <!-- ===================================================== -->
 <!--  BIN COLLISIONS DASHBOARD                              -->
