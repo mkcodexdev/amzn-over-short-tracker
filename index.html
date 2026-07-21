@@ -525,10 +525,10 @@ html { background: #080c12; }
 .kpi-row .kpi:nth-child(3) { animation-delay: .12s; }
 .kpi-row .kpi:nth-child(4) { animation-delay: .18s; }
 .kpi-row .kpi:nth-child(5) { animation-delay: .24s; }
-.kpi.c-blue   { background: linear-gradient(180deg, rgba(6,182,212,.06), rgba(6,182,212,.06)), var(--s1); }
-.kpi.c-red    { background: linear-gradient(180deg, rgba(244,63,94,.06), rgba(244,63,94,.06)), var(--s1); }
-.kpi.c-green  { background: linear-gradient(180deg, rgba(16,217,160,.06), rgba(16,217,160,.06)), var(--s1); }
-.kpi.c-orange { background: linear-gradient(180deg, rgba(245,158,11,.06), rgba(245,158,11,.06)), var(--s1); }
+.kpi.c-blue   { background: #0d1117; }
+.kpi.c-red    { background: #0d1117; }
+.kpi.c-green  { background: #0d1117; }
+.kpi.c-orange { background: #0d1117; }
 .kpi.c-blue   { border: 1px solid rgba(6,182,212,.15); border-top: 3px solid #06b6d4; }
 .kpi.c-red    { border: 1px solid rgba(244,63,94,.15); border-top: 3px solid #f43f5e; }
 .kpi.c-green  { border: 1px solid rgba(16,217,160,.15); border-top: 3px solid #10d9a0; }
@@ -952,9 +952,9 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 .insight-card-title { font-size: .74rem; font-weight: 800; margin-bottom: .75rem; text-transform: uppercase; letter-spacing: .05em; }
 .insight-item { font-size: .78rem; padding: .55rem .7rem; border-radius: 8px; margin-bottom: .5rem; line-height: 1.5; border-left: 3px solid transparent; }
 .insight-item:last-child { margin-bottom: 0; }
-.insight-item.good   { background: rgba(16,217,160,.08); color: var(--ok);  border-left-color: var(--ok); }
-.insight-item.bad    { background: rgba(244,63,94,.08); color: var(--err); border-left-color: var(--err); }
-.insight-item.action { background: rgba(255,153,0,.08); color: var(--pri); border-left-color: var(--pri); }
+.insight-item.good   { background: rgba(16,217,160,.08); color: var(--txt);  border-left-color: var(--ok); }
+.insight-item.bad    { background: rgba(244,63,94,.08); color: var(--txt); border-left-color: var(--err); }
+.insight-item.action { background: rgba(255,153,0,.08); color: var(--txt); border-left-color: var(--pri); }
 .insight-item b { color: var(--txt); }
 
 /* ── THRESHOLD CALCULATOR ── */
@@ -1141,6 +1141,8 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 .bc-hl-box li { font-size: .78rem; color: var(--txt); padding: .5rem 0; border-bottom: 1px solid var(--brd); line-height: 1.5; }
 .bc-hl-box li:last-child { border-bottom: none; padding-bottom: 0; }
 .bc-hl-box li strong { color: var(--pri); }
+.bc-textarea { width: 100%; min-height: 120px; background: transparent; border: none; color: var(--txt); font-size: 0.85rem; line-height: 1.5; resize: vertical; outline: none; font-family: inherit; }
+.bc-textarea::placeholder { color: var(--mut); }
 
 .bc-rc-box { border-radius: 12px; padding: 1.25rem; background: var(--s1); border: 1px solid var(--brd); border-left: 4px solid var(--cyan); display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
 @media (max-width: 900px) { .bc-rc-box { grid-template-columns: 1fr; } }
@@ -1247,7 +1249,34 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
   --soos-priG:    rgba(230,138,0,.1);
 }
 
+.bc-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.bc-modal { background: var(--s1); width: 90%; max-width: 600px; border-radius: 12px; border: 1px solid var(--brd); box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; animation: popIn 0.3s ease-out; }
+.bc-modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--brd); display: flex; justify-content: space-between; align-items: center; background: rgba(var(--pri-rgb), 0.05); }
+.bc-modal-header h2 { font-size: 1.1rem; color: var(--txt); display: flex; align-items: center; gap: .5rem; }
+.bc-modal-close { background: none; border: none; color: var(--mut); cursor: pointer; transition: color 0.2s; display: flex; }
+.bc-modal-close:hover { color: var(--err); }
+.bc-modal-body { padding: 1.5rem; overflow-y: auto; max-height: 70vh; }
+.bc-modal-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.bc-modal-stat-box { background: var(--bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--brd); text-align: center; }
+.bc-modal-stat-val { font-size: 1.5rem; font-weight: 800; color: var(--pri); margin-bottom: 0.25rem; }
+.bc-modal-stat-lbl { font-size: 0.75rem; color: var(--mut); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.bc-modal-section { margin-bottom: 1.5rem; }
+.bc-modal-section h3 { font-size: 0.85rem; color: var(--mut); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; border-bottom: 1px solid var(--brd); padding-bottom: 0.5rem; }
+.bc-modal-list { list-style: none; padding: 0; margin: 0; }
+.bc-modal-list li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed var(--brd); font-size: 0.85rem; }
+.bc-modal-list li:last-child { border-bottom: none; }
+.bc-modal-list .val { font-weight: 700; color: var(--txt); }
+@keyframes popIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 </style>
+<div class="bc-modal-overlay" id="bcUserModal" onclick="if(event.target===this) bcCloseUserDetails()">
+  <div class="bc-modal">
+    <div class="bc-modal-header">
+      <h2><span class="material-icons-round" style="color:var(--pri);">person</span> <span id="bcUserModalName"></span></h2>
+      <button class="bc-modal-close" onclick="bcCloseUserDetails()"><span class="material-icons-round">close</span></button>
+    </div>
+    <div class="bc-modal-body" id="bcUserModalBody"></div>
+  </div>
+</div>
 </head>
 <body>
 
@@ -1526,6 +1555,13 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
     <div class="chip-bar" id="chipBar">
       <span class="chip on" id="chip-all" onclick="setFilter('all')">All Records</span>
       <span class="chip" id="chip-empty" onclick="setFilter('empty')">Incomplete <span id="incompleteQty" class="chip-badge"></span></span>
+      <select class="chip" id="floorFilter" onchange="if(this.value!=='none') setFilter(this.value); else setFilter('all');" style="background:var(--s2); outline:none; border:1px solid var(--glass-border); cursor:pointer; color:var(--txt); font-weight:600;">
+        <option value="none">Floors...</option>
+        <option value="p-1" id="opt-p1">P-1</option>
+        <option value="p-2" id="opt-p2">P-2</option>
+        <option value="p-3" id="opt-p3">P-3</option>
+        <option value="p-4" id="opt-p4">P-4</option>
+      </select>
       <span class="chip summary-btn" id="chip-summary" onclick="setFilter('summary')" title="View Summary Report">
         <span class="material-icons-round" style="font-size:16px;">insert_chart_outlined</span> Summary Report
       </span>
@@ -1569,6 +1605,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
             <th data-col="symptoms" class="sortable">Symptoms <span class="material-icons-round si">unfold_more</span></th>
             <th data-col="quantity" class="sortable" style="text-align:center;">Qty <span class="material-icons-round si">unfold_more</span></th>
             <th data-col="timestamp" class="sortable">Timestamp <span class="material-icons-round si">unfold_more</span></th>
+            <th data-col="floor" class="sortable" style="width:70px;min-width:70px;max-width:70px;text-align:center;padding:0.4rem;">Floor <span class="material-icons-round si">unfold_more</span></th>
             <th data-col="comment" class="sortable">Comment <span class="material-icons-round si">unfold_more</span></th>
             <th data-col="user" class="sortable">User <span class="material-icons-round si">unfold_more</span></th>
           </tr>
@@ -1636,23 +1673,29 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 
         <div class="bc-grid-2">
           <div class="bc-hl-box highlights">
-            <h3><span class="material-icons-round" style="color:var(--ok);font-size:1.1rem;">check_circle</span> Highlights</h3>
+            <h3><span class="material-icons-round" style="color:var(--ok);font-size:1.1rem;">check_circle</span> Key Successes</h3>
             <ul id="bcHighlights"></ul>
           </div>
           <div class="bc-hl-box lowlights">
-            <h3><span class="material-icons-round" style="color:var(--err);font-size:1.1rem;">warning</span> Lowlights</h3>
+            <h3><span class="material-icons-round" style="color:var(--err);font-size:1.1rem;">warning</span> Key Issues</h3>
             <ul id="bcLowlights"></ul>
           </div>
         </div>
 
         <div class="bc-grid-2">
           <div class="bc-hl-box" style="border-left:4px solid var(--pri);">
-            <h3><span class="material-icons-round" style="color:var(--pri);font-size:1.1rem;">search</span> Root Causes</h3>
-            <ul id="bcRootCauses"></ul>
+            <h3 style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="display:flex; align-items:center;"><span class="material-icons-round" style="color:var(--pri);font-size:1.1rem;margin-right:0.3rem;">search</span> Root Causes</span>
+              <button onclick="bcGenerateInsights('rc')" class="icon-btn-sq" title="Auto-Generate" style="margin:0; padding:4px; height:auto; width:auto;"><span class="material-icons-round" style="font-size:16px;">auto_awesome</span></button>
+            </h3>
+            <textarea id="bcRootCauses" class="bc-textarea" placeholder="Enter root causes manually..." oninput="bcSaveState()" spellcheck="false"></textarea>
           </div>
           <div class="bc-hl-box" style="border-left:4px solid var(--cyan);">
-            <h3><span class="material-icons-round" style="color:var(--cyan);font-size:1.1rem;">build</span> Corrective Actions</h3>
-            <ul id="bcCorrectiveActions"></ul>
+            <h3 style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="display:flex; align-items:center;"><span class="material-icons-round" style="color:var(--cyan);font-size:1.1rem;margin-right:0.3rem;">build</span> Corrective Actions</span>
+              <button onclick="bcGenerateInsights('ca')" class="icon-btn-sq" title="Auto-Generate" style="margin:0; padding:4px; height:auto; width:auto;"><span class="material-icons-round" style="font-size:16px;">auto_awesome</span></button>
+            </h3>
+            <textarea id="bcCorrectiveActions" class="bc-textarea" placeholder="Enter corrective actions manually..." oninput="bcSaveState()" spellcheck="false"></textarea>
           </div>
         </div>
       </div>
@@ -2245,10 +2288,14 @@ window.addEventListener('DOMContentLoaded', function(){
       toggleAll(false);
       return;
     }
+    if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      e.stopPropagation();
+      saveToCSV();
+      return;
+    }
     if (e.ctrlKey) {
-      if (e.key === 's' || e.key === 'S') {
-        e.preventDefault(); saveToCSV();
-      } else if (e.key === 'z' || e.key === 'Z') {
+      if (e.key === 'z' || e.key === 'Z') {
         const act = document.activeElement;
         if (act && (act.tagName === 'TEXTAREA' || (act.tagName === 'INPUT' && ['text','search','number'].includes(act.type)))) return;
         e.preventDefault(); undo();
@@ -2481,22 +2528,25 @@ async function osHandleFiles(files) {
         const existingIds = existingMap[k] || [];
         const cmtIdx = fileHeaders.indexOf('comment');
         const usrIdx = fileHeaders.indexOf('user');
+        const flrIdx = fileHeaders.indexOf('floor');
         const cmtVal = cmtIdx !== -1 ? String(row[cmtIdx] || '').trim() : '';
         const usrVal = usrIdx !== -1 ? String(row[usrIdx] || '').trim() : '';
+        const flrVal = flrIdx !== -1 ? String(row[flrIdx] || '').trim() : '';
         if (c < existingIds.length) {
           // Row already exists in our table at least this many times.
           // Update comments/user info if the new file has them and old doesn't.
           const eid = existingIds[c];
-          if (cmtVal || usrVal) {
-            if (!userData[eid]) userData[eid] = { comment: '', user: '' };
+          if (cmtVal || usrVal || flrVal) {
+            if (!userData[eid]) userData[eid] = { comment: '', user: '', floor: '' };
             if (cmtVal && !userData[eid].comment) userData[eid].comment = cmtVal;
             if (usrVal && !userData[eid].user) userData[eid].user = usrVal;
+            if (flrVal && !userData[eid].floor) userData[eid].floor = flrVal;
           }
         } else {
           // This is a genuinely new row (or an additional legitimate duplicate)
           const rowId = nextRowId++;
           obj._id = rowId;
-          if (cmtVal || usrVal) userData[rowId] = { comment: cmtVal, user: usrVal };
+          if (cmtVal || usrVal || flrVal) userData[rowId] = { comment: cmtVal, user: usrVal, floor: flrVal };
           newRows.push(obj);
           
           if (!existingMap[k]) existingMap[k] = [];
@@ -2538,6 +2588,12 @@ function setFilter(f) {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
   const chip = $(`chip-${f}`);
   if (chip) chip.classList.add('on');
+  
+  const ff = $('floorFilter');
+  if (ff) {
+    if (f.startsWith('p-')) { ff.classList.add('on'); ff.value = f; }
+    else ff.value = 'none';
+  }
 
   document.querySelectorAll('.kpi[data-filter]').forEach(k => {
     k.classList.toggle('active', k.dataset.filter === f);
@@ -2568,6 +2624,10 @@ function filt() {
     if (activeFilter === 'empty') {
       const u = userData[row._id] || {};
       if ((u.comment || '').trim()) return false;
+    }
+    if (activeFilter.startsWith('p-')) {
+      const u = userData[row._id] || {};
+      if (u.floor !== activeFilter.toUpperCase()) return false;
     }
     if (q) {
       const u = userData[row._id] || {};
@@ -2609,6 +2669,7 @@ function filt() {
 function updateKPIs() {
   const total = rawData.length;
   let shortage = 0, overage = 0, totalQty = 0, incompleteQty = 0;
+  let p1Qty = 0, p2Qty = 0, p3Qty = 0, p4Qty = 0;
   rawData.forEach(r => {
     const q = Math.abs(parseFloat(r.quantity) || 0);
     const sym = String(r.symptoms||'').trim().toLowerCase();
@@ -2616,6 +2677,12 @@ function updateKPIs() {
     if (sym === 'overage')  overage  += q;
     totalQty += q;
     if ((userData[r._id]?.comment||'').trim() === '') incompleteQty += q;
+    
+    const flr = (userData[r._id]?.floor||'').toUpperCase();
+    if (flr === 'P-1') p1Qty += q;
+    if (flr === 'P-2') p2Qty += q;
+    if (flr === 'P-3') p3Qty += q;
+    if (flr === 'P-4') p4Qty += q;
   });
   const filled = rawData.filter(r => (userData[r._id]?.comment||'').trim()!=='').length;
   const pct = total > 0 ? Math.round((filled/total)*100) : 0;
@@ -2626,6 +2693,11 @@ function updateKPIs() {
   $('kpiFilled').textContent = pct + '%';
   const incEl = $('incompleteQty');
   if (incEl) incEl.textContent = incompleteQty > 0 ? `(${incompleteQty.toLocaleString()})` : '';
+  const p1El = $('opt-p1'), p2El = $('opt-p2'), p3El = $('opt-p3'), p4El = $('opt-p4');
+  if (p1El) p1El.textContent = `P-1 ${p1Qty > 0 ? '('+p1Qty.toLocaleString()+')' : ''}`;
+  if (p2El) p2El.textContent = `P-2 ${p2Qty > 0 ? '('+p2Qty.toLocaleString()+')' : ''}`;
+  if (p3El) p3El.textContent = `P-3 ${p3Qty > 0 ? '('+p3Qty.toLocaleString()+')' : ''}`;
+  if (p4El) p4El.textContent = `P-4 ${p4Qty > 0 ? '('+p4Qty.toLocaleString()+')' : ''}`;
   const bar = $('tbProgressBar');
   const pctEl = $('tbProgressPct');
   if (bar) { bar.style.width = pct + '%'; if (pct > 0) bar.classList.add('has-value'); else bar.classList.remove('has-value'); }
@@ -2642,6 +2714,16 @@ function saveState() {
     localStorage.setItem('os_fileName', $('fName').textContent);
     if (uploadTime) localStorage.setItem('os_uploadTime', uploadTime.toString());
   } catch(e) { console.warn('Auto-save failed', e); }
+}
+function osSaveManual() {
+  const rc = document.getElementById('osRootCauses');
+  const ca = document.getElementById('osCorrectiveActions');
+  if (rc) localStorage.setItem('os_rc', rc.value);
+  if (ca) localStorage.setItem('os_ca', ca.value);
+}
+function osGenerateInsight(type) {
+  if (type === 'rc') { const el = document.getElementById('osRootCauses'); if (el) { el.value = window._osAutoRC || ''; osSaveManual(); } }
+  else { const el = document.getElementById('osCorrectiveActions'); if (el) { el.value = window._osAutoCA || ''; osSaveManual(); } }
 }
 
 function loadState() {
@@ -2719,6 +2801,15 @@ function drawTable() {
       <td><span class="badge ${bClass}">${esc(displaySymp)}</span></td>
       <td style="text-align:center;font-weight:700;">${esc(row.quantity)}</td>
       <td style="color:var(--mut);font-size:.8rem;">${esc(ts)}</td>
+      <td style="width:70px;min-width:70px;max-width:70px;text-align:center;padding:0.2rem;">
+        <select class="edit-input ${u.floor ? 'has-value' : ''}" id="flr_${id}" onchange="onFlr(${id},this)" style="padding:0.2rem 0.1rem; font-size:0.75rem; text-align:center; cursor:pointer;">
+          <option value="">-</option>
+          <option value="P-1" ${u.floor === 'P-1' ? 'selected' : ''}>P-1</option>
+          <option value="P-2" ${u.floor === 'P-2' ? 'selected' : ''}>P-2</option>
+          <option value="P-3" ${u.floor === 'P-3' ? 'selected' : ''}>P-3</option>
+          <option value="P-4" ${u.floor === 'P-4' ? 'selected' : ''}>P-4</option>
+        </select>
+      </td>
       <td class="td-edit">
         <div class="edit-wrap">
           <input class="edit-input ${cFilled}" id="cmt_${id}" type="text" value="${esc(u.comment)}"
@@ -2743,10 +2834,26 @@ function drawTable() {
 }
 
 /* ── INLINE EDITING ── */
+function onFlr(id, el) {
+  if (!userData[id]) userData[id] = { comment: '', user: '', floor: '' };
+  userData[id].floor = el.value;
+  el.classList.toggle('has-value', el.value !== '');
+}
+
 function onCmt(id, el) {
-  if (!userData[id]) userData[id] = { comment: '', user: '' };
+  if (!userData[id]) userData[id] = { comment: '', user: '', floor: '' };
   userData[id].comment = el.value;
   el.classList.toggle('has-value', el.value.trim() !== '');
+  
+  if (el.value.trim() !== '') {
+    userData[id].floor = '';
+    const flrSel = document.getElementById('flr_' + id);
+    if (flrSel) {
+      flrSel.value = '';
+      flrSel.classList.remove('has-value');
+    }
+  }
+
   updateKPIs();
 }
 
@@ -2828,12 +2935,15 @@ function applyBulk() {
   redoStack = [];
   
   selectedIds.forEach(id => {
-    if (!userData[id]) userData[id] = { comment: '', user: '' };
+    if (!userData[id]) userData[id] = { comment: '', user: '', floor: '' };
     if (!c && !u) {
       userData[id].comment = '';
       userData[id].user = '';
     } else {
-      if (c) userData[id].comment = c;
+      if (c) {
+        userData[id].comment = c;
+        userData[id].floor = '';
+      }
       if (u) userData[id].user = u;
     }
   });
@@ -3389,22 +3499,56 @@ function renderSummaryReport() {
     }
     if (!actionHtml) actionHtml = `<div class="insight-item action">No corrective actions needed right now.</div>`;
 
+    // Build auto-generate strings for RC & CA
+    let autoRC = '';
+    nonSpx.slice(0, 5).forEach(([cat, qty], i) => {
+      const pct = totalErrors > 0 ? ((qty / totalErrors) * 100).toFixed(1) : 0;
+      autoRC += `\u2022 RC${i+1}: ${cat} accounts for ${qty} defects (${pct}%)\n`;
+    });
+    if (!autoRC) autoRC = 'No data available';
+
+    let autoCA = '';
+    nonSpx.slice(0, 3).forEach(([cat], i) => {
+      const users = Object.entries(catUsers[cat] || {}).filter(([u]) => u !== 'Unknown').sort((a, b) => b[1] - a[1]).slice(0, 3);
+      if (!users.length) return;
+      const names = users.map(([u, q]) => `${u} (${q})`).join(', ');
+      autoCA += `\u2022 CA${i+1}: Coaching recommended for ${cat} — ${names}\n`;
+    });
+    if (spxItem) autoCA += `\u2022 SPX5 — ${spxItem[1]} defects flagged for escalation review`;
+    if (!autoCA) autoCA = 'No corrective actions needed right now';
+
+    // Persist auto strings for button use
+    window._osAutoRC = autoRC;
+    window._osAutoCA = autoCA;
+
     const widget = document.createElement('div');
     widget.className = 'chart-widget chart-widget--full';
     widget.innerHTML = `
-      <div class="chart-widget-title">Highlights, Lowlights & Corrective Actions</div>
+      <div class="chart-widget-title">Key Successes, Key Issues & Corrective Actions</div>
       <div class="insight-grid">
         <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--ok);">🟢 Highlights</div>
+          <div class="insight-card-title" style="color:var(--ok);">🟢 Key Successes</div>
           ${goodHtml}
         </div>
         <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--err);">🔴 Lowlights</div>
+          <div class="insight-card-title" style="color:var(--err);">🔴 Key Issues</div>
           ${badHtml}
         </div>
-        <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--pri);">⚡ Corrective Actions</div>
-          ${actionHtml}
+      </div>
+      <div class="bc-grid-2" style="margin-top:1rem;">
+        <div class="bc-hl-box" style="border-left:4px solid var(--pri);">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="display:flex;align-items:center;"><span class="material-icons-round" style="color:var(--pri);font-size:1.1rem;margin-right:0.3rem;">search</span> Root Causes</span>
+            <button onclick="osGenerateInsight('rc')" class="icon-btn-sq" title="Auto-Generate" style="margin:0;padding:4px;height:auto;width:auto;"><span class="material-icons-round" style="font-size:16px;">auto_awesome</span></button>
+          </h3>
+          <textarea id="osRootCauses" class="bc-textarea" placeholder="Enter root causes manually..." oninput="osSaveManual()" spellcheck="false">${(localStorage.getItem('os_rc')||'').replace(/</g,'&lt;')}</textarea>
+        </div>
+        <div class="bc-hl-box" style="border-left:4px solid var(--cyan);">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="display:flex;align-items:center;"><span class="material-icons-round" style="color:var(--cyan);font-size:1.1rem;margin-right:0.3rem;">build</span> Corrective Actions</span>
+            <button onclick="osGenerateInsight('ca')" class="icon-btn-sq" title="Auto-Generate" style="margin:0;padding:4px;height:auto;width:auto;"><span class="material-icons-round" style="font-size:16px;">auto_awesome</span></button>
+          </h3>
+          <textarea id="osCorrectiveActions" class="bc-textarea" placeholder="Enter corrective actions manually..." oninput="osSaveManual()" spellcheck="false">${(localStorage.getItem('os_ca')||'').replace(/</g,'&lt;')}</textarea>
         </div>
       </div>
     `;
@@ -3941,6 +4085,8 @@ function closeUserPopup() {
 let bcRawData = [];
 let bcFileName = '';
 let bcUploadTime = null;
+let bcAutoRC = '';
+let bcAutoCA = '';
 let bcChart = null;
 let bcChartDD = null;
 let bcChartFloor = null;
@@ -4093,6 +4239,51 @@ async function bcHandleFiles(files) {
 
 function bcRecalc() { bcRender(); bcSaveState(); }
 
+function bcShowUserDetails(username) {
+  const userRows = bcRawData.filter(r => (r.user_id || r.login || 'Unknown') === username);
+  if (!userRows.length) return;
+  const defects = userRows.length;
+  const stowVol = parseInt($('bcStowVol').value) || 0;
+  const dpmo = stowVol > 0 ? Math.round((defects / stowVol) * 1000000) : 0;
+  const fMap = {}, glMap = {}, flrMap = {};
+  let tenure = 'Unknown';
+  userRows.forEach(r => {
+    const fn = r.most_restrictive_filter_name || r.filter_name || r.restrictive_filter_name || 'Unknown';
+    fMap[fn] = (fMap[fn] || 0) + 1;
+    const gl = r.gl_product_group_name || r.gl_product_group || r.gl || 'Unknown';
+    glMap[gl] = (glMap[gl] || 0) + 1;
+    const fl = bcFloorFromBin(r.bin_id || r.bin || '');
+    flrMap[fl] = (flrMap[fl] || 0) + 1;
+    if (r.tenure_days || r.tenure) tenure = r.tenure_days || r.tenure;
+  });
+  const sortedFilters = Object.entries(fMap).sort((a,b)=>b[1]-a[1]);
+  const sortedGL = Object.entries(glMap).sort((a,b)=>b[1]-a[1]);
+  const sortedFlr = Object.entries(flrMap).sort((a,b)=>b[1]-a[1]);
+  const renderList = (arr) => arr.map(([k,v]) => `<li><span>${esc(bcGlLabel(k))}</span> <span class="val">${v} (${bcPct(v, defects)}%)</span></li>`).join('');
+  
+  $('bcUserModalName').textContent = username;
+  $('bcUserModalBody').innerHTML = `
+    <div class="bc-modal-stats">
+      <div class="bc-modal-stat-box"><div class="bc-modal-stat-val">${bcFmt(defects)}</div><div class="bc-modal-stat-lbl">Defects</div></div>
+      <div class="bc-modal-stat-box"><div class="bc-modal-stat-val">${bcFmt(dpmo)}</div><div class="bc-modal-stat-lbl">DPMO Contrib.</div></div>
+    </div>
+    <div class="bc-modal-section" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:.75rem 1rem; border-radius:8px; border:1px solid var(--brd);">
+      <div><span class="bc-modal-stat-lbl">Tenure:</span> <span style="font-weight:700; color:var(--txt); margin-left:.25rem;">${esc(tenure.toString())} days</span></div>
+      <div><span class="bc-modal-stat-lbl">Top Floor:</span> <span style="font-weight:700; color:var(--txt); margin-left:.25rem;">${esc(sortedFlr[0]?.[0] || 'Unknown')}</span></div>
+    </div>
+    <div class="bc-modal-section">
+      <h3>Defects by Filter</h3>
+      <ul class="bc-modal-list">${renderList(sortedFilters)}</ul>
+    </div>
+    <div class="bc-modal-section">
+      <h3>Defects by GL Product</h3>
+      <ul class="bc-modal-list">${renderList(sortedGL)}</ul>
+    </div>
+  `;
+  $('bcUserModal').style.display = 'flex';
+}
+function bcCloseUserDetails() { $('bcUserModal').style.display = 'none'; }
+
 function bcReset() {
   bcRawData = []; bcFileName = ''; bcUploadTime = null;
   localStorage.removeItem('bc_rawData');
@@ -4100,9 +4291,13 @@ function bcReset() {
   localStorage.removeItem('bc_stowVol');
   localStorage.removeItem('bc_threshold');
   localStorage.removeItem('bc_uploadTime');
+  localStorage.removeItem('bc_rc');
+  localStorage.removeItem('bc_ca');
   $('dashboard').style.display = 'none';
   $('uploadScreen').style.display = 'flex';
   $('bcFileInput').value = '';
+  $('bcRootCauses').value = '';
+  $('bcCorrectiveActions').value = '';
   if (bcChart) { bcChart.destroy(); bcChart = null; }
   if (bcChartDD) { bcChartDD.destroy(); bcChartDD = null; }
   if (bcChartFloor) { bcChartFloor.destroy(); bcChartFloor = null; }
@@ -4119,7 +4314,15 @@ function bcSaveState() {
     localStorage.setItem('bc_stowVol', $('bcStowVol').value || '');
     localStorage.setItem('bc_threshold', $('bcThreshold').value || '10000');
     localStorage.setItem('bc_uploadTime', bcUploadTime || '');
+    localStorage.setItem('bc_rc', $('bcRootCauses').value || '');
+    localStorage.setItem('bc_ca', $('bcCorrectiveActions').value || '');
   } catch (e) { console.warn('Bin Collisions auto-save failed', e); }
+}
+
+function bcGenerateInsights(type) {
+  if (type === 'rc') $('bcRootCauses').value = bcAutoRC;
+  else if (type === 'ca') $('bcCorrectiveActions').value = bcAutoCA;
+  bcSaveState();
 }
 
 function bcLoadState() {
@@ -4129,6 +4332,8 @@ function bcLoadState() {
     const sv = localStorage.getItem('bc_stowVol');
     const th = localStorage.getItem('bc_threshold');
     const ut = localStorage.getItem('bc_uploadTime');
+    const rc = localStorage.getItem('bc_rc');
+    const ca = localStorage.getItem('bc_ca');
     if (r) {
       bcRawData = JSON.parse(r);
       if (bcRawData.length) {
@@ -4140,6 +4345,8 @@ function bcLoadState() {
         $('bcDashboard').style.display = 'block';
         $('bcStowVol').value = sv || '';
         $('bcThreshold').value = th || 10000;
+        $('bcRootCauses').value = rc || '';
+        $('bcCorrectiveActions').value = ca || '';
         bcRender();
       }
     }
@@ -4284,24 +4491,22 @@ function bcRender() {
   const seniorCount = tenureMap['365+d (Senior)'] || 0;
   if (seniorCount > 0 && seniorCount < total * 0.1) hl.push(`Senior associates (365+d) only ${seniorCount} defects (${bcPct(seniorCount, total)}%) — strong process adherence`);
 
-  $('bcHighlights').innerHTML = (hl.length ? hl : ['No highlights to report']).map(t => `<li>${esc(t)}</li>`).join('');
-  $('bcLowlights').innerHTML = (ll.length ? ll : ['No lowlights to report']).map(t => `<li>${esc(t)}</li>`).join('');
+  $('bcHighlights').innerHTML = (hl.length ? hl : ['No key successes to report']).map(t => `<li>${esc(t)}</li>`).join('');
+  $('bcLowlights').innerHTML = (ll.length ? ll : ['No key issues to report']).map(t => `<li>${esc(t)}</li>`).join('');
 
-  /* --- ROOT CAUSES & CORRECTIVE ACTIONS --- */
-  let rcHTML = '';
-  if (filterKeys[0]) rcHTML += `<li><strong>RC1:</strong> ${esc(filterKeys[0])} accounts for ${bcPct(filterMap[filterKeys[0]], total)}% of defects (${filterMap[filterKeys[0]]} defects)</li>`;
+  bcAutoRC = '';
+  if (filterKeys[0]) bcAutoRC += `• RC1: ${esc(filterKeys[0])} accounts for ${bcPct(filterMap[filterKeys[0]], total)}% of defects (${filterMap[filterKeys[0]]} defects)\n`;
   filterKeys.slice(1, 5).forEach((k, i) => {
-    rcHTML += `<li><strong>RC${i + 2}:</strong> ${esc(k)} accounts for ${bcPct(filterMap[k], total)}% of defects (${filterMap[k]} defects)</li>`;
+    bcAutoRC += `• RC${i + 2}: ${esc(k)} accounts for ${bcPct(filterMap[k], total)}% of defects (${filterMap[k]} defects)\n`;
   });
-  $('bcRootCauses').innerHTML = rcHTML || '<li>No data available</li>';
+  if (!bcAutoRC) bcAutoRC = 'No data available';
 
-  let caHTML = '';
-  caHTML += `<li><strong>CA1:</strong> 1:1 coaching for Top 5 offenders (${esc(userKeys.slice(0, 5).join(', '))}) — immediate</li>`;
-  caHTML += `<li><strong>CA2:</strong> Create GCA for coached associates to track compliance improvement</li>`;
-  if (floorKeys[0]) caHTML += `<li><strong>CA3:</strong> ${esc(floorKeys[0])} quality stand-down focusing on ${esc(filterKeys[0] || '')} awareness</li>`;
-  if (glKeys[0]) caHTML += `<li><strong>CA4:</strong> GL Product focus — review stow process for ${esc(bcGlLabel(glKeys[0]))} with bin capacity awareness</li>`;
-  caHTML += `<li><strong>CA5:</strong> Tenured associate coaching — targeted coaching for 31-90d (Ramping) associates to improve process adherence</li>`;
-  $('bcCorrectiveActions').innerHTML = caHTML;
+  bcAutoCA = '';
+  bcAutoCA += `• CA1: 1:1 coaching for Top 5 offenders (${esc(userKeys.slice(0, 5).join(', '))}) — immediate\n`;
+  bcAutoCA += `• CA2: Create GCA for coached associates to track compliance improvement\n`;
+  if (floorKeys[0]) bcAutoCA += `• CA3: ${esc(floorKeys[0])} quality stand-down focusing on ${esc(filterKeys[0] || '')} awareness\n`;
+  if (glKeys[0]) bcAutoCA += `• CA4: GL Product focus — review stow process for ${esc(bcGlLabel(glKeys[0]))} with bin capacity awareness\n`;
+  bcAutoCA += `• CA5: Tenured associate coaching — targeted coaching for 31-90d (Ramping) associates to improve process adherence`;
 
   /* ============ BRIDGE TAB ============ */
   bcDrawBar('bcBridgeChart', filterKeys, filterKeys.map(k => filterMap[k]));
@@ -4330,7 +4535,7 @@ function bcRender() {
   userKeys.forEach((uk, i) => {
     const uDpmo = stowVol > 0 ? Math.round((userMap[uk] / stowVol) * 1000000) : 0;
     const badge = i < 3 ? '<span class="bc-badge-1">●</span>' : i < 5 ? '<span class="bc-badge-2">●</span>' : '';
-    offTableHTML += `<tr><td>${i + 1}</td><td>${esc(uk)}</td><td>${userMap[uk]}</td><td>${bcPct(userMap[uk], total)}%</td><td>${bcFmt(uDpmo)}</td><td>${badge}</td></tr>`;
+    offTableHTML += `<tr style="cursor:pointer;" onclick="bcShowUserDetails('${esc(uk)}')"><td>${i + 1}</td><td><span style="color:var(--pri);font-weight:700;">${esc(uk)}</span></td><td>${userMap[uk]}</td><td>${bcPct(userMap[uk], total)}%</td><td>${bcFmt(uDpmo)}</td><td>${badge}</td></tr>`;
   });
   offTableHTML += '</tbody></table>';
   $('bcOffendersTable').innerHTML = offTableHTML;
